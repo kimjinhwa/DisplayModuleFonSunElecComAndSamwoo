@@ -1,0 +1,51 @@
+{
+  "name": "lv_i18n",
+  "version": "0.2.1",
+  "description": "CLI tools for LittlevGL i18n support.",
+  "keywords": [
+    "i18n",
+    "internationalization"
+  ],
+  "repository": "littlevgl/lv_i18n",
+  "license": "MIT",
+  "files": [
+    "lv_i18n.js",
+    "lib/",
+    "src/"
+  ],
+  "bin": {
+    "lv_i18n": "lv_i18n.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "npm run lint && nyc mocha --recursive",
+    "coverage": "npm run test && nyc report --reporter html",
+    "template_update": "./support/template_update.js",
+    "shrink-deps": "shx rm -rf node_modules/js-yaml/dist node_modules/lodash/fp/",
+    "prepublishOnly": "npm run shrink-deps"
+  },
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "cldr-core": "^42.0.0",
+    "debug": "^4.3.4",
+    "es6-error": "^4.1.1",
+    "glob": "^8.0.3",
+    "js-yaml": "^4.1.0",
+    "shelljs": "^0.8.5"
+  },
+  "bundledDependencies": [
+    "argparse",
+    "cldr-core",
+    "debug",
+    "es6-error",
+    "glob",
+    "js-yaml",
+    "shelljs"
+  ],
+  "devDependencies": {
+    "eslint": "^8.28.0",
+    "mocha": "^10.1.0",
+    "nyc": "^15.1.0",
+    "shx": "^0.3.4"
+  }
+}
