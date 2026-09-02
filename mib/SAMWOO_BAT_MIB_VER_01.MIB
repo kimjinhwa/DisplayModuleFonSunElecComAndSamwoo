@@ -1,0 +1,598 @@
+-- SAMWOO lithium pack SNMP MIB for Display Module (Pack1 + Pack2)
+-- OID tree matches firmware src/snmp_battery.cpp
+--   pack1: 1.3.6.1.2.1.32.1
+--   pack2: 1.3.6.1.2.1.32.2
+-- Referenced from LithumeBAT_MIB_VER_01.MIB (IFTECH)
+-- SNMPv2c community public, UDP 161, Integer32 leaf .0
+
+SAMWOO-BAT-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+	MODULE-IDENTITY, OBJECT-TYPE, Integer32, mgmt
+		FROM SNMPv2-SMI;
+
+samwooBatMIB MODULE-IDENTITY
+	LAST-UPDATED	"202609021415Z"
+	ORGANIZATION	"IFTECH / SunElec / Samwoo"
+	CONTACT-INFO	"mvcjhkim@gmail.com"
+	DESCRIPTION
+		"Samwoo BMS display SNMP MIB. Two lithium packs.
+		Values are raw register integers as served by the agent.
+		Units: SOC/SOH %; capacity 0.1Ah; packV/current/temp 0.1;
+		cell voltage mV; relays 0/1."
+	REVISION	"202609021415Z"
+	DESCRIPTION	"VER 01b — walk terminators after batStatus and batCommon."
+	REVISION	"202609021330Z"
+	DESCRIPTION	"VER 01a — pack3 walk terminator after pack2."
+	REVISION	"202609021300Z"
+	DESCRIPTION	"VER 01 — Pack1 + Pack2, firmware-aligned OIDs."
+	::= { mgmt 1 }
+
+batCommon	OBJECT IDENTIFIER ::= { mgmt 1 }
+batStatus	OBJECT IDENTIFIER ::= { batCommon 32 }
+
+pack1Value	OBJECT IDENTIFIER ::= { batStatus 1 }
+pack2Value	OBJECT IDENTIFIER ::= { batStatus 2 }
+pack3Value	OBJECT IDENTIFIER ::= { batStatus 3 }
+
+-- ============================================================
+-- Pack 1  (1.3.6.1.2.1.32.1)
+-- ============================================================
+
+pack1VoltageMeasure	OBJECT IDENTIFIER ::= { pack1Value 1 }
+
+pack1Ampere OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Pack current, 0.1 A, signed. Modbus addr 5."
+	::= { pack1Value 2 }
+
+pack1SOC OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"State of charge, %. Modbus addr 2."
+	::= { pack1Value 3 }
+
+pack1Capacity OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Capacity, 0.1 Ah. Modbus addr 1."
+	::= { pack1Value 4 }
+
+pack1Temperature	OBJECT IDENTIFIER ::= { pack1Value 5 }
+pack1AlarmStatus	OBJECT IDENTIFIER ::= { pack1Value 6 }
+
+pack1BmsVer OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"BMS version. Modbus addr 0."
+	::= { pack1Value 7 }
+
+pack1PackVoltage OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Pack voltage, 0.1 V, signed. Modbus addr 4."
+	::= { pack1Value 8 }
+
+pack1SOH OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"State of health, %. Modbus addr 3."
+	::= { pack1Value 9 }
+
+pack1Protected OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Protect flags. Modbus addr 14."
+	::= { pack1Value 10 }
+
+pack1CellVmax OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Highest cell voltage, mV. Modbus addr 6."
+	::= { pack1Value 11 }
+
+pack1CellVmin OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Lowest cell voltage, mV. Modbus addr 7."
+	::= { pack1Value 12 }
+
+pack1TempMax OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Highest temperature, 0.1 C. Modbus addr 8."
+	::= { pack1Value 13 }
+
+pack1TempMin OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Lowest temperature, 0.1 C. Modbus addr 9."
+	::= { pack1Value 14 }
+
+pack1CellNum OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Number of cells. Modbus addr 16."
+	::= { pack1Value 15 }
+
+pack1FaultState OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Fault flags. Modbus addr 13."
+	::= { pack1AlarmStatus 1 }
+
+pack1WarningState OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Warning flags. Modbus addr 15."
+	::= { pack1AlarmStatus 2 }
+
+pack1RelayCharge OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Charge relay, 0/1. Modbus addr 12 bit 0."
+	::= { pack1AlarmStatus 4 }
+
+pack1RelayDischarge OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Discharge relay, 0/1. Modbus addr 12 bit 1."
+	::= { pack1AlarmStatus 5 }
+
+pack1Cell1 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 1 voltage, mV. Modbus addr 17."
+	::= { pack1VoltageMeasure 1 }
+pack1Cell2 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 2 voltage, mV. Modbus addr 18."
+	::= { pack1VoltageMeasure 2 }
+pack1Cell3 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 3 voltage, mV. Modbus addr 19."
+	::= { pack1VoltageMeasure 3 }
+pack1Cell4 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 4 voltage, mV. Modbus addr 20."
+	::= { pack1VoltageMeasure 4 }
+pack1Cell5 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 5 voltage, mV. Modbus addr 21."
+	::= { pack1VoltageMeasure 5 }
+pack1Cell6 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 6 voltage, mV. Modbus addr 22."
+	::= { pack1VoltageMeasure 6 }
+pack1Cell7 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 7 voltage, mV. Modbus addr 23."
+	::= { pack1VoltageMeasure 7 }
+pack1Cell8 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 8 voltage, mV. Modbus addr 24."
+	::= { pack1VoltageMeasure 8 }
+pack1Cell9 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 9 voltage, mV. Modbus addr 25."
+	::= { pack1VoltageMeasure 9 }
+pack1Cell10 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 10 voltage, mV. Modbus addr 26."
+	::= { pack1VoltageMeasure 10 }
+pack1Cell11 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 11 voltage, mV. Modbus addr 27."
+	::= { pack1VoltageMeasure 11 }
+pack1Cell12 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 12 voltage, mV. Modbus addr 28."
+	::= { pack1VoltageMeasure 12 }
+pack1Cell13 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 13 voltage, mV. Modbus addr 29."
+	::= { pack1VoltageMeasure 13 }
+pack1Cell14 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 14 voltage, mV. Modbus addr 30."
+	::= { pack1VoltageMeasure 14 }
+pack1Cell15 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 15 voltage, mV. Modbus addr 31."
+	::= { pack1VoltageMeasure 15 }
+pack1Cell16 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 16 voltage, mV. Modbus addr 32."
+	::= { pack1VoltageMeasure 16 }
+
+pack1Temperature1 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 1, 0.1 C. Modbus addr 32."
+	::= { pack1Temperature 1 }
+pack1Temperature2 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 2, 0.1 C. Modbus addr 33."
+	::= { pack1Temperature 2 }
+pack1Temperature3 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 3, 0.1 C. Modbus addr 34."
+	::= { pack1Temperature 3 }
+pack1Temperature4 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 4, 0.1 C. Modbus addr 35."
+	::= { pack1Temperature 4 }
+pack1Temperature5 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 5, 0.1 C. Modbus addr 36."
+	::= { pack1Temperature 5 }
+pack1Temperature6 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 6, 0.1 C. Modbus addr 37."
+	::= { pack1Temperature 6 }
+pack1Temperature7 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 7, 0.1 C. Modbus addr 38."
+	::= { pack1Temperature 7 }
+pack1Temperature8 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 8, 0.1 C. Modbus addr 39."
+	::= { pack1Temperature 8 }
+
+-- ============================================================
+-- Pack 2  (1.3.6.1.2.1.32.2)  — same layout as pack 1
+-- ============================================================
+
+pack2VoltageMeasure	OBJECT IDENTIFIER ::= { pack2Value 1 }
+
+pack2Ampere OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Pack current, 0.1 A, signed. Modbus addr 5."
+	::= { pack2Value 2 }
+
+pack2SOC OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"State of charge, %. Modbus addr 2."
+	::= { pack2Value 3 }
+
+pack2Capacity OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Capacity, 0.1 Ah. Modbus addr 1."
+	::= { pack2Value 4 }
+
+pack2Temperature	OBJECT IDENTIFIER ::= { pack2Value 5 }
+pack2AlarmStatus	OBJECT IDENTIFIER ::= { pack2Value 6 }
+
+pack2BmsVer OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"BMS version. Modbus addr 0."
+	::= { pack2Value 7 }
+
+pack2PackVoltage OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Pack voltage, 0.1 V, signed. Modbus addr 4."
+	::= { pack2Value 8 }
+
+pack2SOH OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"State of health, %. Modbus addr 3."
+	::= { pack2Value 9 }
+
+pack2Protected OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Protect flags. Modbus addr 14."
+	::= { pack2Value 10 }
+
+pack2CellVmax OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Highest cell voltage, mV. Modbus addr 6."
+	::= { pack2Value 11 }
+
+pack2CellVmin OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Lowest cell voltage, mV. Modbus addr 7."
+	::= { pack2Value 12 }
+
+pack2TempMax OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Highest temperature, 0.1 C. Modbus addr 8."
+	::= { pack2Value 13 }
+
+pack2TempMin OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Lowest temperature, 0.1 C. Modbus addr 9."
+	::= { pack2Value 14 }
+
+pack2CellNum OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Number of cells. Modbus addr 16."
+	::= { pack2Value 15 }
+
+pack2FaultState OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Fault flags. Modbus addr 13."
+	::= { pack2AlarmStatus 1 }
+
+pack2WarningState OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Warning flags. Modbus addr 15."
+	::= { pack2AlarmStatus 2 }
+
+pack2RelayCharge OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Charge relay, 0/1. Modbus addr 12 bit 0."
+	::= { pack2AlarmStatus 4 }
+
+pack2RelayDischarge OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Discharge relay, 0/1. Modbus addr 12 bit 1."
+	::= { pack2AlarmStatus 5 }
+
+pack2Cell1 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 1 voltage, mV. Modbus addr 17."
+	::= { pack2VoltageMeasure 1 }
+pack2Cell2 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 2 voltage, mV. Modbus addr 18."
+	::= { pack2VoltageMeasure 2 }
+pack2Cell3 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 3 voltage, mV. Modbus addr 19."
+	::= { pack2VoltageMeasure 3 }
+pack2Cell4 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 4 voltage, mV. Modbus addr 20."
+	::= { pack2VoltageMeasure 4 }
+pack2Cell5 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 5 voltage, mV. Modbus addr 21."
+	::= { pack2VoltageMeasure 5 }
+pack2Cell6 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 6 voltage, mV. Modbus addr 22."
+	::= { pack2VoltageMeasure 6 }
+pack2Cell7 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 7 voltage, mV. Modbus addr 23."
+	::= { pack2VoltageMeasure 7 }
+pack2Cell8 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 8 voltage, mV. Modbus addr 24."
+	::= { pack2VoltageMeasure 8 }
+pack2Cell9 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 9 voltage, mV. Modbus addr 25."
+	::= { pack2VoltageMeasure 9 }
+pack2Cell10 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 10 voltage, mV. Modbus addr 26."
+	::= { pack2VoltageMeasure 10 }
+pack2Cell11 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 11 voltage, mV. Modbus addr 27."
+	::= { pack2VoltageMeasure 11 }
+pack2Cell12 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 12 voltage, mV. Modbus addr 28."
+	::= { pack2VoltageMeasure 12 }
+pack2Cell13 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 13 voltage, mV. Modbus addr 29."
+	::= { pack2VoltageMeasure 13 }
+pack2Cell14 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 14 voltage, mV. Modbus addr 30."
+	::= { pack2VoltageMeasure 14 }
+pack2Cell15 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 15 voltage, mV. Modbus addr 31."
+	::= { pack2VoltageMeasure 15 }
+pack2Cell16 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Cell 16 voltage, mV. Modbus addr 32."
+	::= { pack2VoltageMeasure 16 }
+
+pack2Temperature1 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 1, 0.1 C. Modbus addr 32."
+	::= { pack2Temperature 1 }
+pack2Temperature2 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 2, 0.1 C. Modbus addr 33."
+	::= { pack2Temperature 2 }
+pack2Temperature3 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 3, 0.1 C. Modbus addr 34."
+	::= { pack2Temperature 3 }
+pack2Temperature4 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 4, 0.1 C. Modbus addr 35."
+	::= { pack2Temperature 4 }
+pack2Temperature5 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 5, 0.1 C. Modbus addr 36."
+	::= { pack2Temperature 5 }
+pack2Temperature6 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 6, 0.1 C. Modbus addr 37."
+	::= { pack2Temperature 6 }
+pack2Temperature7 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 7, 0.1 C. Modbus addr 38."
+	::= { pack2Temperature 7 }
+pack2Temperature8 OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Temperature 8, 0.1 C. Modbus addr 39."
+	::= { pack2Temperature 8 }
+
+-- ============================================================
+-- Pack 3 terminator  (1.3.6.1.2.1.32.3)
+-- GETNEXT after pack2CellNum (.32.2.15.0) returns this leaf.
+-- Walk of pack2Value then leaves the subtree; no endOfMibView loop.
+-- ============================================================
+
+batMibWalkEnd OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Always 0. GETNEXT terminator after pack2Value. Not a battery pack."
+	::= { pack3Value 1 }
+
+batStatusWalkEnd OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Always 0. GETNEXT terminator after batStatus (sibling of .32)."
+	::= { batCommon 33 }
+
+batCommonWalkEnd OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Always 0. GETNEXT terminator after batCommon / mib-2."
+	::= { mgmt 2 }
+
+END
