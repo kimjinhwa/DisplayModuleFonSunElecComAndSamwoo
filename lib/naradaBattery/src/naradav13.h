@@ -3,14 +3,24 @@
 
 #include <functional>
 #include <map>
-#include "options.h"
-#include "ModbusMessage.h"
+
+#ifndef HAS_FREERTOS
+#define HAS_FREERTOS 1
+#endif
 
 #if HAS_FREERTOS
 extern "C" {
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 }
+#endif
+
+typedef int Error;
+#ifndef SUCCESS
+#define SUCCESS 0
+#endif
+#ifndef CRC_ERROR
+#define CRC_ERROR 1
 #endif
 
 #define OP_LED 33

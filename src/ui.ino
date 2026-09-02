@@ -13,6 +13,11 @@
 #include <esp_wifi.h>
 //#include "lv_i18n/lv_i18n.h" 
 #include <Wire.h>
+#include "board_pins.h"
+#include "eth_w610.h"
+#include "samwoo_poll.h"
+#include "snmp_battery.h"
+#include "status_leds.h"
 #define GFX_BL DF_GFX_BL // default backlight pin, you may replace DF_GFX_BL to actual backlight pin
 #define TFT_BL 2
 #define BRIGHT  155 
@@ -69,21 +74,25 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
    lv_disp_flush_ready(disp);
 }
 static lv_obj_t *cursor_obj;
+static lv_indev_t *sTouchIndev = NULL;
 void init_cursor() {
-    // 커서 객체 생성
-    cursor_obj = lv_obj_create(lv_scr_act());
-    
-    // 커서 스타일 설정
-    lv_obj_set_size(cursor_obj, 20, 20);  // 크기 설정
-    lv_obj_set_style_radius(cursor_obj, LV_RADIUS_CIRCLE, 0);  // 원형으로 설정
-    lv_obj_set_style_bg_color(cursor_obj, lv_color_hex(0xFF0000), 0);  // 빨간색
-    lv_obj_set_style_bg_opa(cursor_obj, LV_OPA_50, 0);  // 반투명
-    
-    // 초기에는 숨김
-    lv_obj_add_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
+    cursor_obj = lv_obj_create(lv_layer_top());
+    lv_obj_remove_style_all(cursor_obj);
+    lv_obj_set_size(cursor_obj, 5, 5);
+    lv_obj_set_style_radius(cursor_obj, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(cursor_obj, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_bg_opa(cursor_obj, LV_OPA_50, 0);
+    lv_obj_set_style_border_width(cursor_obj, 0, 0);
+    lv_obj_set_style_pad_all(cursor_obj, 0, 0);
+    lv_obj_clear_flag(cursor_obj, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_obj_add_flag(cursor_obj, (lv_obj_flag_t)(LV_OBJ_FLAG_FLOATING | LV_OBJ_FLAG_IGNORE_LAYOUT | LV_OBJ_FLAG_HIDDEN));
+    if (sTouchIndev)
+    {
+      lv_indev_set_cursor(sTouchIndev, cursor_obj);
+    }
 }
-static unsigned long last_touch_time = 0;  // 마지막 터치 시간을 저장할 변수
-#define TOUCH_TIMEOUT (3 * 60 * 1000)    // 10분을 밀리초로 변환
+static unsigned long last_touch_time = 0;
+#define TOUCH_TIMEOUT (3 * 60 * 1000)
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
   unsigned long current_time = millis();
@@ -98,12 +107,10 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
   if (touch_has_signal())
   {
-    last_touch_time = current_time; // 타이머 리셋
     if (touch_touched())
     {
+      last_touch_time = current_time;
       data->state = LV_INDEV_STATE_PR;
-
-      /*Set the coordinates*/
       data->point.x = touch_last_x;
       data->point.y = touch_last_y;
       lv_obj_clear_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
@@ -112,12 +119,8 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
                     touch_last_y - 10); // 크기의 절
       ledcWrite(0,BRIGHT);
       lcdOntime=0;
-      // Serial.print( "Data xx " );
-      // Serial.println( data->point.x );
-      // Serial.print( "Data yy " );
-      // Serial.println( data->point.y );
     }
-    else if (touch_released())
+    else
     {
       data->state = LV_INDEV_STATE_REL;
     }
@@ -180,10 +183,9 @@ void setup()
   // 추가로 전력 소비를 더 줄이려면
   btStop(); // Bluetooth도 끄기`
   Serial.begin(BAUDRATEDEF);
-  Serial1.begin(BAUDRATEDEF, 134217756U, 18, 17);
   EEPROM.begin(120);
   Wire.setClock(400000);
-  if (EEPROM.read(0) != 0x55)
+  if (EEPROM.read(0) != 0x56)
   {
     ipAddress_struct.IPADDRESS = (uint32_t)IPAddress(192, 168, 0, 57);
     ipAddress_struct.GATEWAY = (uint32_t)IPAddress(192, 168, 0, 1);
@@ -203,7 +205,7 @@ void setup()
     ipAddress_struct.alarmSetStatus = 0;
     strncpy(ipAddress_struct.deviceName, "BAT RACK1", 9);
 
-    EEPROM.writeByte(0, 0x55);
+    EEPROM.writeByte(0, 0x56);
     EEPROM.commit();
     EEPROM.writeBytes(1, (const byte *)&ipAddress_struct, sizeof(nvsSystemSet));
     EEPROM.commit();
@@ -214,7 +216,7 @@ void setup()
   ipAddress_struct.HighImp = 0;
   ipAddress_struct.HighTemp = 0;
   EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
-  Serial.printf("\ninit data \n%d %d %d %d", ipAddress_struct.HighVoltage, ipAddress_struct.LowVoltage, ipAddress_struct.HighTemp, ipAddress_struct.HighImp);
+  Serial.printf("\ninit data \n%d %d %d %u", ipAddress_struct.HighVoltage, ipAddress_struct.LowVoltage, ipAddress_struct.HighTemp, ipAddress_struct.HighImp);
   // while (!Serial);
   Serial.println("LVGL Benchmark Demo");
 
@@ -249,6 +251,7 @@ void setup()
   digitalWrite(TOUCH_GT911_RST, HIGH);
   delay(10);
   touch_init();
+  Wire.setClock(400000);
 
   screenWidth = gfx->width();
   screenHeight = gfx->height();
@@ -278,9 +281,11 @@ void setup()
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     indev_drv.read_cb = my_touchpad_read;
-    lv_indev_drv_register(&indev_drv);
+    sTouchIndev = lv_indev_drv_register(&indev_drv);
 
     ui_init();
+    initSamwooPackUi();
+    statusLedsBegin();
 
     lv_label_set_text(ui_DateLabel, "");
     lv_label_set_text(ui_DateLabel1, "");
@@ -304,10 +309,12 @@ void setup()
 #ifdef USEWIFI
   wifiOTAsetup();
 #endif
-  pinMode(13, OUTPUT);
-  pinMode(12, OUTPUT);
   EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
   setMemoryDataToLCD();
+  samwooBegin();
+  ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
+               IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
+  snmpBatteryBegin();
   esp_task_wdt_init(WDT_TIMEOUT, true);
   esp_task_wdt_add(NULL);
   naradaClient.initBatInfo();
@@ -327,6 +334,8 @@ void loop()
   now = millis();
   esp_task_wdt_reset();
   serialProtocalparse();
+  snmpBatteryLoop();
+  statusLedsLoop();
   if ((now - previousmills > everySecondInterval))
   {
     previousmills = now;
@@ -344,5 +353,5 @@ void loop()
       lv_obj_add_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
   }
   lv_timer_handler(); /* let the GUI do its work */
-  vTaskDelay(50);
+  vTaskDelay(5);
 }

@@ -13,19 +13,10 @@ void TAMC_GT911::begin(uint8_t _addr) {
   reset();
 }
 void TAMC_GT911::reset() {
-  pinMode(pinInt, OUTPUT);
   pinMode(pinRst, OUTPUT);
-  digitalWrite(pinInt, 0);
   digitalWrite(pinRst, 0);
   delay(10);
-  digitalWrite(pinInt, addr==GT911_ADDR2);
-  delay(1);
   digitalWrite(pinRst, 1);
-  delay(5);
-  digitalWrite(pinInt, 0);
-  delay(50);
-  pinMode(pinInt, INPUT);
-  // attachInterrupt(pinInt, TAMC_GT911::onInterrupt, RISING);
   delay(50);
   readBlockData(configBuf, GT911_CONFIG_START, GT911_CONFIG_SIZE);
   setResolution(width, height);
@@ -125,27 +116,19 @@ void TAMC_GT911::writeByteData(uint16_t reg, uint8_t val) {
 }
 uint8_t TAMC_GT911::readByteData(uint16_t reg)
 {
-  uint8_t x;
   Wire.beginTransmission(addr);
   Wire.write(highByte(reg));
   Wire.write(lowByte(reg));
-  Wire.endTransmission();
-  if (Wire.endTransmission() != 0)
+  if (Wire.endTransmission(false) != 0)
   {
-    log_e("GT911 I2C write failed");
-    esp_restart();
-    return -1; // 에러 상태 리턴
+    return 0;
   }
   int received = Wire.requestFrom(addr, (uint8_t)1);
   if (received == 0)
   {
-    log_e("GT911 I2C read failed");
-    Wire.flush();
-    esp_restart();
-    return -1; // 에러 상태 리턴
+    return 0;
   }
-  x = Wire.read();
-  return x;
+  return (uint8_t)Wire.read();
 }
 void TAMC_GT911::writeBlockData(uint16_t reg, uint8_t *val, uint8_t size) {
   Wire.beginTransmission(addr);

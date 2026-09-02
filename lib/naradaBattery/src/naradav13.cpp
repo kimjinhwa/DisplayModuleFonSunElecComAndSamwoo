@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <naradav13.h>
 #include <bitset>
-#include <Logging.h>
+#define LOG_W(...) Serial.printf(__VA_ARGS__)
+#define LOG_I(...) Serial.printf(__VA_ARGS__)
 //#include "ModbusClient.h"
 #define SET_TIMEOUT 300
 #define OPLED_ON false

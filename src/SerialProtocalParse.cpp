@@ -7,6 +7,8 @@
 #include "main.h"
 #include <EEPROM.h>
 #include "naradav13.h"
+#include "samwoo_poll.h"
+#include "snmp_battery.h"
 
 #define USE_SERIAL Serial
 #define DEVICE_LCD
@@ -176,6 +178,47 @@ void initUI_Ptr(){
    ui_packVoltage[6]=ui_lblPack7;
    ui_packVoltage[7]=ui_lblPack8;
 }
+
+static void refreshPackButtons(int selected)
+{
+  initUI_Ptr();
+  for (int p = 0; p < 2; ++p)
+  {
+    String t("#");
+    t += p + 1;
+    t += "  ";
+    if (naradaClient.batInfo[p].totalVoltage != 0)
+    {
+      t += String(float(naradaClient.batInfo[p].totalVoltage) / 100.0f, 1);
+    }
+    else
+    {
+      t += "--";
+    }
+    t += "V";
+    lv_label_set_text(ui_packVoltage[p], t.c_str());
+  }
+  lv_obj_set_style_bg_color(ui_btnPack1, lv_color_hex(selected == 0 ? 0x1B7A3A : 0x332222),
+                            LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_btnPack2, lv_color_hex(selected == 1 ? 0x1B7A3A : 0x332222),
+                            LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void initSamwooPackUi()
+{
+  initUI_Ptr();
+  lv_obj_add_flag(ui_btnPack3, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_btnPack4, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_btnPack5, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_btnPack6, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_btnPack7, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_btnPack8, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_set_height(ui_btnPack1, lv_pct(28));
+  lv_obj_set_height(ui_btnPack2, lv_pct(28));
+  lv_label_set_text(ui_lblPack1, "#1  --V");
+  lv_label_set_text(ui_lblPack2, "#2  --V");
+  refreshPackButtons(0);
+}
 void displayToLcd(int packNumber,bool isSucess)
 {
   initUI_Ptr();
@@ -308,46 +351,33 @@ void printPackData(int packNumber){
   Serial.printf("\nnaradaClient.batInfo[packNumber].SOH %d",naradaClient.batInfo[packNumber].SOH );
   Serial.printf("\nnaradaClient.batInfo[packNumber].BMS_PROTECT_STATUS %d",naradaClient.batInfo[packNumber].BMS_PROTECT_STATUS );
 }
-bool isFirst=true;
-
 void serialProtocalparse()
 {
-  int packNumber = 0;
-  int ValidData = 0;
-  ValidData = readSerial1Data();
-  if (ValidData == 1)
+  if (!samwooPollTick())
   {
-    packNumber = revData[1];
-
-    if (naradaClient.readAnswerData(&revData[0]) == 0)
-    {
-      Serial.printf("\nData Received OK Pack : %d", packNumber);
-      //printPackData(packNumber);
-      String msg("STATUS:Module On #"); 
-      msg += packNumber+1;
-      lv_label_set_text(ui_CompanyLabel1, msg.c_str());
-      if(isFirst){ //처음 한번만 화면에 뿌려준다. 
-      // 이후에는 사이드 팩정보만 업데이트 한다.
-        displayToLcd(packNumber,true);
-        isFirst=false;
-      }
-      else{
-        displayToLcd(packNumber,false);
-      } 
-
-    }
-    ValidData = 0;
-    memset(revData, 0x00, 255);
+    return;
   }
-  else if (ValidData == 2)
+  snmpBatteryRefresh();
+  static uint32_t lastUiMs = 0;
+  if (millis() - lastUiMs < 2000)
   {
-      packNumber = revData[1];
-      String msg("STATUS:Module Off #"); 
-      msg += packNumber+1;
-      lv_label_set_text(ui_CompanyLabel1, msg.c_str());
-      naradaClient.initBatInfo(packNumber);
-      displayToLcd(packNumber,false);
-      //printPackData(packNumber);
+    return;
+  }
+  lastUiMs = millis();
+  const int pack = (nowWindows == MODULE_2) ? 1 : 0;
+  if (samwooOk[pack])
+  {
+    String msg("STATUS:Module On #");
+    msg += pack + 1;
+    lv_label_set_text(ui_CompanyLabel1, msg.c_str());
+    displayToLcd(pack, true);
+    refreshPackButtons(pack);
+  }
+  else
+  {
+    String msg("STATUS:Module Off #");
+    msg += pack + 1;
+    lv_label_set_text(ui_CompanyLabel1, msg.c_str());
   }
 }
 
@@ -364,11 +394,9 @@ void btnPackChange(lv_event_t * e)
 
 void btnEventPack1(lv_event_t * e)
 {
-
-  // while(Serial1.available());
-  // delay(10);
-  // Serial1.printf("datareq 1 \n\r");
+  nowWindows = MODULE_1;
   displayToLcd(0,true);
+  refreshPackButtons(0);
   printPackData(0);
 }
 
@@ -379,10 +407,9 @@ void btnEventPack1(lv_event_t * e)
 
 void btnEventPack2(lv_event_t * e)
 {
-  // while(Serial1.available());
-  // delay(10);
-  // Serial1.printf("datareq 0 \n\r");
+  nowWindows = MODULE_2;
   displayToLcd(1,true);
+  refreshPackButtons(1);
   printPackData(1);
 }
 
