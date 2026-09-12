@@ -21,7 +21,12 @@ typedef struct
     uint32_t HighImp;
     uint16_t alarmSetStatus;
     char deviceName[20];
+    bool isUpdate;
+    char ssid[20];
+    char password[20];
 } nvsSystemSet;
+extern nvsSystemSet ipAddress_struct;
 void setMemoryDataToLCD();
+void nvsSave();
 
 #endif

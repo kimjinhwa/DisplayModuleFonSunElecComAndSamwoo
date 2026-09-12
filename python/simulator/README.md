@@ -17,6 +17,7 @@ powershell -ExecutionPolicy Bypass -File .\makeExe.ps1
 산출물은 `dist\rtuslave_samwoo.exe` 입니다.
 
 - Port / Baud(기본 COM4, 9600 8N1) → 모드 선택 → **Open**
+- **Debug** 체크 시 ModPoll처럼 Rx/Tx 헥사 팝업
 - 레지스터 값을 바꾼 뒤 **Set**
 - FC03(Holding) / FC04(Input) 모두 같은 맵(주소 0~47)
 

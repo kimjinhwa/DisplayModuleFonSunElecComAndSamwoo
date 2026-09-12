@@ -18,10 +18,12 @@
 #include "samwoo_poll.h"
 #include "snmp_battery.h"
 #include "status_leds.h"
+#include "myBlueTooth.h"
+#include "Version.h"
 #define GFX_BL DF_GFX_BL // default backlight pin, you may replace DF_GFX_BL to actual backlight pin
 #define TFT_BL 2
 #define BRIGHT  155 
-#define WDT_TIMEOUT 5 
+#define WDT_TIMEOUT 15 
 
 static uint32_t screenWidth;
 static uint32_t screenHeight;
@@ -132,6 +134,12 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 };
 
 nvsSystemSet ipAddress_struct;
+static bool sEthOk = false;
+void nvsSave()
+{
+  EEPROM.writeBytes(1, (const byte *)&ipAddress_struct, sizeof(nvsSystemSet));
+  EEPROM.commit();
+}
 void setMemoryDataToLCD(){
 
   IPAddress ipaddress(ipAddress_struct.IPADDRESS);
@@ -166,26 +174,17 @@ void setMemoryDataToLCD(){
 
   lv_label_set_text(ui_DateLabel1,"");
   lv_label_set_text(ui_TimeLabel1,"");
+  
 }
 void displayToLcd(int packNumber,bool isSucess);
 extern uint isModuleExgist[8];
 
 void setup()
 {
-  // WiFi 끄기
-  esp_wifi_deinit();
-  // 또는
-  esp_wifi_stop();
-
-  // WiFi 모듈의 전원 자체를 끄기
-  esp_wifi_set_mode(WIFI_MODE_NULL);
-
-  // 추가로 전력 소비를 더 줄이려면
-  btStop(); // Bluetooth도 끄기`
   Serial.begin(BAUDRATEDEF);
-  EEPROM.begin(120);
-  Wire.setClock(400000);
-  if (EEPROM.read(0) != 0x56)
+  Serial.printf("\n[BOOT] VERSION %s env=esp32_samwoo\n", VERSION);
+  EEPROM.begin(256);
+  if (EEPROM.read(0) != 0x57)
   {
     ipAddress_struct.IPADDRESS = (uint32_t)IPAddress(192, 168, 0, 57);
     ipAddress_struct.GATEWAY = (uint32_t)IPAddress(192, 168, 0, 1);
@@ -194,7 +193,7 @@ void setup()
     ipAddress_struct.DNS1 = (uint32_t)IPAddress(8, 8, 8, 8);
     ipAddress_struct.DNS2 = (uint32_t)IPAddress(164, 124, 101, 2);
     ipAddress_struct.WEBSERVERPORT = 81;
-    ipAddress_struct.NTP_1 = (uint32_t)IPAddress(203, 248, 240, 140); //(203, 248, 240, 140);
+    ipAddress_struct.NTP_1 = (uint32_t)IPAddress(203, 248, 240, 140);
     ipAddress_struct.NTP_2 = (uint32_t)IPAddress(13, 209, 84, 50);
     ipAddress_struct.ntpuse = false;
 
@@ -204,11 +203,13 @@ void setup()
     ipAddress_struct.HighTemp = 70;
     ipAddress_struct.alarmSetStatus = 0;
     strncpy(ipAddress_struct.deviceName, "BAT RACK1", 9);
+    ipAddress_struct.isUpdate = false;
+    strncpy(ipAddress_struct.ssid, "iftech", 6);
+    strncpy(ipAddress_struct.password, "iftech0273", 10);
 
-    EEPROM.writeByte(0, 0x56);
+    EEPROM.writeByte(0, 0x57);
     EEPROM.commit();
-    EEPROM.writeBytes(1, (const byte *)&ipAddress_struct, sizeof(nvsSystemSet));
-    EEPROM.commit();
+    nvsSave();
     Serial.println("Memory Initialized first booting....");
   }
   ipAddress_struct.HighVoltage = 0;
@@ -217,11 +218,8 @@ void setup()
   ipAddress_struct.HighTemp = 0;
   EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
   Serial.printf("\ninit data \n%d %d %d %u", ipAddress_struct.HighVoltage, ipAddress_struct.LowVoltage, ipAddress_struct.HighTemp, ipAddress_struct.HighImp);
-  // while (!Serial);
   Serial.println("LVGL Benchmark Demo");
 
-  // Init Display
-  // Add
   gfx->begin();
   gfx->fillScreen(BLACK);
 
@@ -230,16 +228,33 @@ void setup()
 
   ledcSetup(0, 300, 8);
   ledcAttachPin(TFT_BL, 0);
-  ledcWrite(0, BRIGHT); /* Screen brightness can be modified by adjusting this parameter. (0-255) */
+  ledcWrite(0, BRIGHT);
 
-  gfx->fillScreen(RED);
-  delay(500);
-  gfx->fillScreen(GREEN);
-  delay(500);
-  gfx->fillScreen(BLUE);
-  delay(500);
-  gfx->fillScreen(BLACK);
-  delay(500);
+  if (ipAddress_struct.isUpdate)
+  {
+    ipAddress_struct.isUpdate = false;
+    nvsSave();
+    Serial.println("Update....");
+    gfx->setTextColor(WHITE);
+    gfx->setCursor(0, 10);
+    gfx->println("Update....");
+    wifiOTAsetup(true);
+    Serial.println("[OTA] finished, continue normal boot");
+  }
+  else
+  {
+    Serial.println("No Update....");
+    gfx->fillScreen(RED);
+    delay(500);
+    gfx->fillScreen(GREEN);
+    delay(500);
+    gfx->fillScreen(BLUE);
+    delay(500);
+    gfx->fillScreen(BLACK);
+    delay(500);
+  }
+
+  bleSetup();
   lv_init();
 
   // led = lv_led_create(lv_scr_act());
@@ -306,15 +321,19 @@ void setup()
   tv.tv_sec = mktime(&tm);
   tv.tv_usec = 0;
   settimeofday(&tv, NULL);
-#ifdef USEWIFI
-  wifiOTAsetup();
-#endif
   EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
   setMemoryDataToLCD();
   samwooBegin();
-  ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
-               IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
-  snmpBatteryBegin();
+  sEthOk = ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
+                        IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
+  if (sEthOk)
+  {
+    snmpBatteryBegin();
+  }
+  else
+  {
+    Serial.println("[ETH] no W610 - SNMP skipped");
+  }
   esp_task_wdt_init(WDT_TIMEOUT, true);
   esp_task_wdt_add(NULL);
   naradaClient.initBatInfo();
@@ -334,8 +353,10 @@ void loop()
   now = millis();
   esp_task_wdt_reset();
   serialProtocalparse();
-  snmpBatteryLoop();
+  if (sEthOk)
+    snmpBatteryLoop();
   statusLedsLoop();
+  bleCheck();
   if ((now - previousmills > everySecondInterval))
   {
     previousmills = now;

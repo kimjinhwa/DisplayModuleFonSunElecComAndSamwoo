@@ -3,4 +3,5 @@
 void WebSocketJsonProtocalLoop(void *parameters);
 void serialProtocalparse();
 void initSamwooPackUi();
+int selectedPackIndex();
 #endif

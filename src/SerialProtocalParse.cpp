@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <string.h>
 #include "SerialProtocalParse.h"
 #include "BLEDevice.h"
 #include "ArduinoJson.h"
@@ -179,6 +180,20 @@ void initUI_Ptr(){
    ui_packVoltage[7]=ui_lblPack8;
 }
 
+static void setLabelIfChanged(lv_obj_t *lbl, const char *text)
+{
+  if (lbl == NULL || text == NULL)
+  {
+    return;
+  }
+  const char *cur = lv_label_get_text(lbl);
+  if (cur != NULL && strcmp(cur, text) == 0)
+  {
+    return;
+  }
+  lv_label_set_text(lbl, text);
+}
+
 static void refreshPackButtons(int selected)
 {
   initUI_Ptr();
@@ -196,8 +211,14 @@ static void refreshPackButtons(int selected)
       t += "--";
     }
     t += "V";
-    lv_label_set_text(ui_packVoltage[p], t.c_str());
+    setLabelIfChanged(ui_packVoltage[p], t.c_str());
   }
+  static int sBtnSel = -1;
+  if (sBtnSel == selected)
+  {
+    return;
+  }
+  sBtnSel = selected;
   lv_obj_set_style_bg_color(ui_btnPack1, lv_color_hex(selected == 0 ? 0x1B7A3A : 0x332222),
                             LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_btnPack2, lv_color_hex(selected == 1 ? 0x1B7A3A : 0x332222),
@@ -231,7 +252,7 @@ void displayToLcd(int packNumber,bool isSucess)
 
   HeaderText += "-";
   HeaderText += packNumber+1;
-  if(isSucess)lv_label_set_text(ui_HeaderTitle,HeaderText.c_str() );
+  if(isSucess)setLabelIfChanged(ui_HeaderTitle,HeaderText.c_str() );
 
   ModuleVoltage[packNumber] = naradaClient.batInfo[packNumber].totalVoltage;
 
@@ -249,10 +270,10 @@ void displayToLcd(int packNumber,bool isSucess)
   //Serial.printf("\navgVoltage  %f" ,avgVoltage  );
 
   strTemp = "AVG  :" + String(avgVoltage/100);
-  if(isSucess)lv_label_set_text(ui_lblOutputVoltage, strTemp.c_str());
+  if(isSucess)setLabelIfChanged(ui_lblOutputVoltage, strTemp.c_str());
 
   strTemp = "AMP  :" + String((naradaClient.batInfo[packNumber].ampere - 30000) / 100.0f);
-  if(isSucess)lv_label_set_text(ui_lblTotalAmpere, strTemp.c_str());
+  if(isSucess)setLabelIfChanged(ui_lblTotalAmpere, strTemp.c_str());
 
   strTemp = "TEMP : " + String(
                             (naradaClient.batInfo[packNumber].Tempreature[0] - 50 +
@@ -260,7 +281,7 @@ void displayToLcd(int packNumber,bool isSucess)
                              naradaClient.batInfo[packNumber].Tempreature[2] - 50 +
                              naradaClient.batInfo[packNumber].Tempreature[3] - 50) /
                             4);
-  if(isSucess)lv_label_set_text(ui_lblTotalTemperature, strTemp.c_str());
+  if(isSucess)setLabelIfChanged(ui_lblTotalTemperature, strTemp.c_str());
 
   highCellVoltage = naradaClient.batInfo[packNumber].voltage[0];
   lowCellVoltage = naradaClient.batInfo[packNumber].voltage[0];
@@ -275,13 +296,13 @@ void displayToLcd(int packNumber,bool isSucess)
   
   differential = highCellVoltage - lowCellVoltage;
   strTemp = "HVOL :" + String(highCellVoltage) + "V";
-  if(isSucess)lv_label_set_text(ui_lblHighVoltage, strTemp.c_str());
+  if(isSucess)setLabelIfChanged(ui_lblHighVoltage, strTemp.c_str());
 
   strTemp = "LVOL :" + String(lowCellVoltage) + "V";
-  if(isSucess)lv_label_set_text(ui_lblLowVoltage, strTemp.c_str());
+  if(isSucess)setLabelIfChanged(ui_lblLowVoltage, strTemp.c_str());
 
   strTemp = "DIFF :" + String(int(differential * 1000)) + "mV";
-  if(isSucess)lv_label_set_text(ui_lblDiff, strTemp.c_str());
+  if(isSucess)setLabelIfChanged(ui_lblDiff, strTemp.c_str());
   if(naradaClient.batInfo[packNumber].Tempreature[0]< 50) naradaClient.batInfo[packNumber].Tempreature[0] =0;
   if(naradaClient.batInfo[packNumber].Tempreature[1]< 50) naradaClient.batInfo[packNumber].Tempreature[1] =0;
   if(naradaClient.batInfo[packNumber].Tempreature[2]< 50) naradaClient.batInfo[packNumber].Tempreature[2] =0;
@@ -314,7 +335,7 @@ void displayToLcd(int packNumber,bool isSucess)
       break;
     }
     if (isSucess)
-      lv_label_set_text(ui_cellVoltage[i], cellVoltage.c_str());
+      setLabelIfChanged(ui_cellVoltage[i], cellVoltage.c_str());
   }
   // if(isSucess)lv_label_set_text((lv_obj_t *)ui_packVoltage[packNumber], String( naradaClient.batInfo[packNumber].totalVoltage!=0 ? naradaClient.batInfo[packNumber].totalVoltage/100.0f:0).c_str());
   String tVoltage = "";
@@ -327,7 +348,7 @@ void displayToLcd(int packNumber,bool isSucess)
     tVoltage += 0;
   // 배열이 유효한 범위 내에 있는지 확인
   if (packNumber >= 0 && packNumber < 8) {
-      lv_label_set_text(ui_packVoltage[packNumber], tVoltage.c_str());
+      setLabelIfChanged(ui_packVoltage[packNumber], tVoltage.c_str());
   }
 };
 void printPackData(int packNumber){
@@ -367,17 +388,8 @@ void serialProtocalparse()
   const int pack = (nowWindows == MODULE_2) ? 1 : 0;
   if (samwooOk[pack])
   {
-    String msg("STATUS:Module On #");
-    msg += pack + 1;
-    lv_label_set_text(ui_CompanyLabel1, msg.c_str());
     displayToLcd(pack, true);
     refreshPackButtons(pack);
-  }
-  else
-  {
-    String msg("STATUS:Module Off #");
-    msg += pack + 1;
-    lv_label_set_text(ui_CompanyLabel1, msg.c_str());
   }
 }
 
@@ -386,6 +398,11 @@ void serialProtocalparse()
 //   Serial.printf(" %02x",c);
 // };
 //Serial1.print("hello..");
+
+int selectedPackIndex()
+{
+  return (nowWindows == MODULE_2) ? 1 : 0;
+}
 
 void btnPackChange(lv_event_t * e)
 {
@@ -450,11 +467,9 @@ void btnEventPack8(lv_event_t * e)
 }
 void saveButtenEvent(lv_event_t * e)
 {
-  char buf[255];
-  while(Serial1.available());
-  Serial1.printf("datareq 0 \n\r");
-  delay(100);
-  while (Serial1.available() ) Serial1.read();
+  const uint32_t oldIp = ipAddress_struct.IPADDRESS;
+  const uint32_t oldSn = ipAddress_struct.SUBNETMASK;
+  const uint32_t oldGw = ipAddress_struct.GATEWAY;
 
   IPAddress ipaddress(
     String(lv_textarea_get_text(ui_txtIPADDRESS1)).toInt(),
@@ -462,61 +477,59 @@ void saveButtenEvent(lv_event_t * e)
     String(lv_textarea_get_text(ui_txtIPADDRESS3)).toInt(),
     String(lv_textarea_get_text(ui_txtIPADDRESS4)).toInt()
   );
-  ipAddress_struct.IPADDRESS = (uint32_t)ipaddress;
   IPAddress subnet(
     String(lv_textarea_get_text(ui_txtSUBNET1)).toInt(),
     String(lv_textarea_get_text(ui_txtSUBNET2)).toInt(),
     String(lv_textarea_get_text(ui_txtSUBNET3)).toInt(),
     String(lv_textarea_get_text(ui_txtSUBNET4)).toInt()
   );
-  ipAddress_struct.SUBNETMASK= (uint32_t)subnet;
   IPAddress gateway(
     String(lv_textarea_get_text(ui_txtGATEWAY1)).toInt(),
     String(lv_textarea_get_text(ui_txtGATEWAY2)).toInt(),
     String(lv_textarea_get_text(ui_txtGATEWAY3)).toInt(),
     String(lv_textarea_get_text(ui_txtGATEWAY4)).toInt()
   );
-  ipAddress_struct.GATEWAY= (uint32_t)gateway;
-  String devicName(lv_textarea_get_text(ui_txtDEVICENAME));
-  Serial.printf("\nlv device name is %s",devicName);
-  Serial.printf("\nIPADDRESS %d.%d.%d.%d.",IPAddress(ipaddress)[0],IPAddress(ipaddress)[1],IPAddress(ipaddress)[2],IPAddress(ipaddress)[3]);
-  Serial.printf("\nsubnet %d.%d.%d.%d.",IPAddress(subnet)[0],IPAddress(subnet)[1],IPAddress(subnet)[2],IPAddress(subnet)[3]);
-  Serial.printf("\ngateway %d.%d.%d.%d.",IPAddress(gateway)[0],IPAddress(gateway)[1],IPAddress(gateway)[2],IPAddress(gateway)[3]);
-
-  snprintf(ipAddress_struct.deviceName,20,devicName.c_str());
-  Serial.printf("\nWrite device name to eeprom that is %s",ipAddress_struct.deviceName);
+  ipAddress_struct.IPADDRESS = (uint32_t)ipaddress;
+  ipAddress_struct.SUBNETMASK = (uint32_t)subnet;
+  ipAddress_struct.GATEWAY = (uint32_t)gateway;
+  snprintf(ipAddress_struct.deviceName, 20, "%s", lv_textarea_get_text(ui_txtDEVICENAME));
   EEPROM.writeBytes(1, (const byte *)&ipAddress_struct, sizeof(nvsSystemSet));
   EEPROM.commit();
-  EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
-  Serial.println("\nEEPROM Memory modified and Reread it now..");
-  //Serial1.printf("ipaddress -set -i %s -s %s -g %s \r",ipaddress.toString(),gateway.toString(),subnet.toString());
-  Serial.printf("ipaddress -set -i %s -s %s  -g %s \n\r",ipaddress.toString(),subnet.toString(),gateway.toString());
-  Serial1.printf("ipaddress -set -i %s -s %s  -g %s \n\r",ipaddress.toString(),subnet.toString(),gateway.toString());
-  int i=0;
-  memset(buf,0x00,255);
-  int timeout =0;
-  while (!Serial1.available() && timeout < 100){
-    timeout++;
-    delay(1);
-  }
-  Serial.printf("\nTimeout count is %d\n",timeout);
-
-  while (Serial1.available() && i<254  )
-  {
-    buf[i++]=Serial1.read();
-    if(!Serial1.available()){
-      delay(1);
-    }
-  }
-  Serial.printf("\nbuf:%s",buf);
-  String msg("\nSTATUS:"); 
-  msg += buf;
-  msg += " Now System reboot ! Waiting....";
-  Serial.printf(msg.c_str());
   setMemoryDataToLCD();
-  lv_label_set_text(ui_CompanyLabel3, msg.c_str());
 
-  Serial1.printf("reboot \r");
+  const bool netChanged = (oldIp != ipAddress_struct.IPADDRESS) ||
+                          (oldSn != ipAddress_struct.SUBNETMASK) ||
+                          (oldGw != ipAddress_struct.GATEWAY);
+  if (!netChanged)
+  {
+    lv_label_set_text(ui_CompanyLabel3, "저장 완료");
+    lv_obj_set_style_text_font(ui_CompanyLabel3, &ui_font_malgunFont1, 0);
+    return;
+  }
+
+  const char *msg = "시스템을 재 부팅후 적용합니다.";
+  lv_label_set_text(ui_CompanyLabel3, msg);
+  lv_obj_set_style_text_font(ui_CompanyLabel3, &ui_font_malgunFont1, 0);
+
+  lv_obj_t *box = lv_obj_create(lv_scr_act());
+  lv_obj_set_size(box, 720, 140);
+  lv_obj_center(box);
+  lv_obj_set_style_bg_color(box, lv_color_hex(0x202020), 0);
+  lv_obj_set_style_bg_opa(box, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_color(box, lv_color_hex(0xFFC107), 0);
+  lv_obj_set_style_border_width(box, 2, 0);
+  lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *lbl = lv_label_create(box);
+  lv_label_set_text(lbl, msg);
+  lv_obj_set_style_text_color(lbl, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_style_text_font(lbl, &ui_font_malgunFont1, 0);
+  lv_obj_center(lbl);
+
+  Serial.printf("\n[SET] IP %s reboot\n", ipaddress.toString().c_str());
+  lv_timer_handler();
+  delay(1800);
+  ESP.restart();
 }
 
 // void ChangeModuleEvent(lv_event_t * e)
