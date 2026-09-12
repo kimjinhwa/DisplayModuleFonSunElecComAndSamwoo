@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>도움말</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div class="top">
+    <b>도움말</b>
+    <div class="nav">
+      <a href="index.html">모니터</a>
+      <a href="settings.html">설정</a>
+      <a href="snmpTest.html">SNMP</a>
+      <a class="active" href="help.html">도움말</a>
+    </div>
+  </div>
+  <div class="box wide">
+    <p class="note">그림·인쇄본은 저장소 <code>doc/사용설명서/manual/사용설명서.html</code> 을 보십시오.</p>
+    <h2 id="lcd">1. 7인치 화면</h2>
+    <div class="help-block">
+      전원을 켜면 메인 화면에 팩 전압·셀·온도가 나옵니다. 값은 약 2초마다 갱신됩니다.
+      오른쪽 <strong>#1 / #2</strong>로 팩을 고릅니다. <strong>설 정</strong>에서 IP·장치 이름을 바꿉니다.
+      하단 STATUS 는 <code>STATUS:#n 정상</code> / <code>통신끊김</code> / <code>경보#n</code> 입니다.
+    </div>
+    <h2 id="ipfinder">2. IP Finder (PC)</h2>
+    <div class="help-block">
+      실행 파일 <code>python/release/IPFinder.exe</code> (또는 <code>python/SnmpFinder.py</code>). 같은 LAN에서 <strong>UDP 1234</strong>로 장비를 찾고
+      IP·서브넷·게이트웨이·WEB ENABLE·WEB PORT 를 바꿉니다. 적용 후 재부팅합니다.
+      NOTE 열에는 장치 이름(기본 <code>BAT RACK1</code>)이 보입니다.
+      Finder의 TRAP 칸은 공통 도구입니다. <strong>이 제품은 SNMP TRAP을 보내지 않습니다.</strong>
+    </div>
+    <h2 id="web">3. 웹 화면</h2>
+    <div class="help-block">
+      주소 <code>http://장비IP:포트</code> (공장 <code>192.168.0.57:81</code>). 로그인 기본값 <strong>admin / admin</strong>.
+      상단 메뉴: 모니터 · 설정 · SNMP · 도움말 · 업로드.
+    </div>
+    <h2 id="ota">4. 펌웨어 업데이트</h2>
+    <div class="help-block">
+      펌웨어는 <strong>앱 BLE → 재부팅 → Wi‑Fi OTA</strong> 입니다. 유선 이더넷으로는 .bin 을 올리지 않습니다.
+      앱: <code>IFTECH_SAMWOO_App/release/IFTECH_SAMWOO_App.apk</code>
+      연결 → <code>IFTECH_SW_</code> SCAN → SSID/PASS 전송 → <strong>update</strong> → 재접속 <strong>version</strong>.
+    </div>
+    <h2 id="oid">5. SNMP OID (요약)</h2>
+    <div class="help-block">
+      SNMPv2c, UDP 161, community <code>public</code>. 팩1 <code>1.3.6.1.2.1.32.1</code> · 팩2 <code>...32.2</code>.
+    </div>
+    <table class="doc">
+      <thead><tr><th>항목</th><th>OID (팩1)</th><th>단위</th></tr></thead>
+      <tbody>
+        <tr><td>SOC</td><td><code>.1.3.6.1.2.1.32.1.3.0</code></td><td>%</td></tr>
+        <tr><td>팩 전압</td><td><code>.1.3.6.1.2.1.32.1.8.0</code></td><td>0.1 V</td></tr>
+        <tr><td>전류</td><td><code>.1.3.6.1.2.1.32.1.2.0</code></td><td>0.1 A</td></tr>
+        <tr><td>셀 1</td><td><code>.1.3.6.1.2.1.32.1.1.1.0</code></td><td>mV</td></tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

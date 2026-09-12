@@ -10,6 +10,12 @@ compile_commands.json
 ~$*
 doc/~$*
 
+python/soak_logs/
+python/build/
+python/dist/
+python/__pycache__/
+python/*.spec
+
 # Flutter companion app
 IFTECH_SAMWOO_App/.dart_tool/
 IFTECH_SAMWOO_App/.flutter-plugins-dependencies

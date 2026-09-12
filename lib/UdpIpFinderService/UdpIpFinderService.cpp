@@ -138,6 +138,7 @@ void UdpIpFinderService::handleSetNetworkConfig(const JsonDocument &request)
   const JsonVariantConst webObj = request["config"]["network"]["web"];
   if (!webObj.isNull())
   {
+    cfg.webSpecified = true;
     cfg.webEnabled = webObj["enabled"] | true;
     uint16_t p = static_cast<uint16_t>(webObj["port"] | cfg.webPort);
     if (p < 1)
@@ -149,6 +150,7 @@ void UdpIpFinderService::handleSetNetworkConfig(const JsonDocument &request)
   const JsonVariantConst webPortDirect = request["config"]["network"]["webserverport"];
   if (!webPortDirect.isNull())
   {
+    cfg.webSpecified = true;
     const int p = webPortDirect.as<int>();
     if (p >= 1 && p <= 65535)
     {

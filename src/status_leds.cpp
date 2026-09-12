@@ -32,6 +32,11 @@ static uint16_t packAlarm(int pack)
   return (uint16_t)(samwooReg(pack, 13) | samwooReg(pack, 14) | samwooReg(pack, 15));
 }
 
+bool statusLedsHasAlarm(int pack)
+{
+  return packAlarm(pack) != 0;
+}
+
 /* 삼우에스비 통신맵 20260816. Protect/Warning 동일 비트, Fault는 별도. */
 static const char *alarmCause(int pack)
 {
@@ -82,6 +87,11 @@ static const char *alarmCause(int pack)
     return "통신";
   }
   return NULL;
+}
+
+const char *statusLedsAlarmCause(int pack)
+{
+  return alarmCause(pack);
 }
 
 static void appendAlarm(char *out, size_t cap, int pack)

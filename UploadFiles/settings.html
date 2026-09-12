@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BMS 설정</title>
+  <link rel="stylesheet" href="app.css" />
+  <script src="settings.js" defer></script>
+</head>
+<body>
+  <div class="top">
+    <b>설정</b>
+    <div class="nav">
+      <a href="index.html">모니터</a>
+      <a class="active" href="settings.html">설정</a>
+      <a href="snmpTest.html">SNMP</a>
+      <a href="help.html">도움말</a>
+    </div>
+  </div>
+  <div class="box">
+    <div class="row">
+      <div><label>장치 이름</label><input id="name" type="text"></div>
+      <div><label>시각 (YYYY-MM-DD HH:MM:SS)</label><input id="time" type="text"></div>
+    </div>
+    <p class="note">MAC <span id="mac">-</span> · 펌웨어 <span id="ver">-</span></p>
+    <div class="row">
+      <div><label>IP</label><input id="ip" type="text"></div>
+      <div><label>서브넷</label><input id="subnet" type="text"></div>
+    </div>
+    <div class="row">
+      <div><label>게이트웨이</label><input id="gateway" type="text"></div>
+      <div><label>웹 포트</label><input id="webPort" type="number"></div>
+    </div>
+    <label><input id="webEnabled" type="checkbox" style="width:auto"> 웹 사용</label>
+    <div class="row">
+      <div><label>OTA SSID</label><input id="ssid" type="text"></div>
+      <div><label>OTA 암호 (비우면 유지, none=개방)</label><input id="pass" type="password"></div>
+    </div>
+    <div class="row">
+      <div><label>웹 아이디</label><input id="userid" type="text"></div>
+      <div><label>웹 암호</label><input id="passwd" type="password"></div>
+    </div>
+    <button class="primary" id="save">저장</button>
+    <div id="msg"></div>
+  </div>
+</body>
+</html>

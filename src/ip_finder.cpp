@@ -23,7 +23,7 @@ static bool buildIpFinderSnapshot(UdpIpFinderService::DeviceSnapshot &out, void 
     out.subnet = IPAddress(ipAddress_struct.SUBNETMASK);
     out.gateway = IPAddress(ipAddress_struct.GATEWAY);
   }
-  out.webEnabled = false;
+  out.webEnabled = ipAddress_struct.WEBSERVERPORT != 0;
   out.webPort = ipAddress_struct.WEBSERVERPORT;
   if (out.webPort < 1)
   {
@@ -43,15 +43,24 @@ static bool applyIpFinderNetworkConfig(const UdpIpFinderService::NetworkConfig &
   ipAddress_struct.IPADDRESS = static_cast<uint32_t>(cfg.ip);
   ipAddress_struct.SUBNETMASK = static_cast<uint32_t>(cfg.subnet);
   ipAddress_struct.GATEWAY = static_cast<uint32_t>(cfg.gateway);
-  if (cfg.webPort >= 1)
+  if (cfg.webSpecified)
   {
-    ipAddress_struct.WEBSERVERPORT = cfg.webPort;
+    if (cfg.webEnabled)
+    {
+      ipAddress_struct.WEBSERVERPORT = cfg.webPort >= 1 ? cfg.webPort : 80;
+    }
+    else
+    {
+      ipAddress_struct.WEBSERVERPORT = 0;
+    }
   }
   nvsSave();
-  Serial.printf("[IPFINDER] saved ip=%s sn=%s gw=%s\n",
+  Serial.printf("[IPFINDER] saved ip=%s sn=%s gw=%s web=%u port=%u\n",
                 cfg.ip.toString().c_str(),
                 cfg.subnet.toString().c_str(),
-                cfg.gateway.toString().c_str());
+                cfg.gateway.toString().c_str(),
+                cfg.webEnabled ? 1U : 0U,
+                (unsigned)ipAddress_struct.WEBSERVERPORT);
   return true;
 }
 

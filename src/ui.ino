@@ -18,6 +18,7 @@
 #include "samwoo_poll.h"
 #include "snmp_battery.h"
 #include "ip_finder.h"
+#include "web_fs.h"
 #include "status_leds.h"
 #include "myBlueTooth.h"
 #include "Version.h"
@@ -327,10 +328,12 @@ void setup()
   samwooBegin();
   sEthOk = ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
                         IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
+  webFsBegin();
   if (sEthOk)
   {
     snmpBatteryBegin();
     ipFinderBegin();
+    webHttpBegin();
   }
   else
   {
@@ -359,6 +362,7 @@ void loop()
   {
     snmpBatteryLoop();
     ipFinderPoll();
+    webHttpLoop();
   }
   statusLedsLoop();
   bleCheck();

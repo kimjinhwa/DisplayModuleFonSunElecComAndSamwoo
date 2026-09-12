@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>삼우 리튬 BMS 디스플레이 사용설명서</title>
+<style>
+@page { size: A4 portrait; margin: 16mm 14mm 16mm 14mm; }
+:root {
+  --navy: #1f3864; --navy-2: #2c4a7c; --line: #b9c2ce; --line-2: #d7dde5;
+  --head-bg: #e4e9f0; --soft-bg: #f4f6f9; --ink: #1a1a1a; --muted: #5b6470;
+  --accent: #0b6b3a; --warn: #9a3412;
+}
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0; font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-size: 10.2pt; line-height: 1.62; color: var(--ink); background: #fff;
+}
+@media screen {
+  body { background: #edeff2; padding: 24px 0; }
+  .doc { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 16mm 14mm; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.18); }
+}
+@media print {
+  .doc { width: auto; padding: 0; box-shadow: none; }
+  .no-print { display: none !important; }
+}
+.cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; text-align: center; break-after: page; }
+.cover .kicker { font-size: 11pt; letter-spacing: .28em; color: var(--muted); margin-bottom: 10mm; }
+.cover h1 { font-size: 28pt; line-height: 1.28; color: var(--navy); margin: 0 0 6mm; letter-spacing: -.01em; }
+.cover .sub { font-size: 13pt; color: var(--navy-2); margin-bottom: 14mm; font-weight: 600; }
+.cover .rule { width: 46mm; height: 3px; background: var(--navy); margin: 0 auto 14mm; }
+.cover-meta { margin: 0 auto; border-collapse: collapse; font-size: 10pt; min-width: 105mm; }
+.cover-meta th, .cover-meta td { border: 1px solid var(--line); padding: 3mm 5mm; text-align: left; }
+.cover-meta th { background: var(--head-bg); width: 38mm; font-weight: 600; color: var(--navy); }
+.cover .foot { margin-top: 18mm; font-size: 9.5pt; color: var(--muted); }
+.toc { break-after: page; }
+.toc h2 { border: none; background: none; color: var(--navy); padding: 0; margin: 0 0 5mm; font-size: 17pt; }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc > ol > li { margin-bottom: 1.4mm; font-weight: 600; color: var(--navy); font-size: 10.6pt; line-height: 1.45; }
+.toc ol ol { margin: .6mm 0 1.8mm 6mm; font-weight: 400; color: var(--ink); font-size: 9.3pt; line-height: 1.42; }
+.toc ol ol li { margin-bottom: .2mm; }
+.toc a { color: inherit; text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.toc-hint { margin: 0 0 4mm; }
+.part { break-before: page; }
+h1.part-title { font-size: 19pt; color: #fff; background: var(--navy); margin: 0 0 7mm; padding: 4.5mm 6mm; border-radius: 2px; break-after: avoid; }
+h2 { font-size: 13.2pt; color: var(--navy); margin: 0 0 3.5mm; padding: 2mm 0 1.6mm; border-bottom: 2px solid var(--navy); break-after: avoid; break-before: page; }
+.part > h2:first-of-type, .toc h2, .no-print h2 { break-before: auto; }
+h3 { font-size: 11.2pt; color: var(--navy-2); margin: 6mm 0 2.5mm; padding-left: 3mm; border-left: 4px solid var(--navy-2); break-after: avoid; }
+h4 { font-size: 10.4pt; color: #333; margin: 4.5mm 0 2mm; break-after: avoid; }
+p { margin: 0 0 2.6mm; }
+ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+li { margin-bottom: 1.1mm; }
+table.t { width: 100%; border-collapse: collapse; margin: 2.5mm 0 5mm; font-size: 9.3pt; line-height: 1.45; }
+table.t thead { display: table-header-group; }
+table.t th, table.t td { border: 1px solid var(--line); padding: 1.6mm 2.2mm; vertical-align: top; }
+table.t th { background: var(--head-bg); color: var(--navy); font-weight: 600; text-align: left; }
+table.t tbody tr:nth-child(even) td { background: var(--soft-bg); }
+table.t td.c, table.t th.c { text-align: center; }
+table.t td.oid, table.t td.mono { font-family: Consolas, "D2Coding", "Courier New", monospace; font-size: 8.9pt; white-space: nowrap; }
+table.t.fit { break-inside: avoid; }
+table.t.compact th, table.t.compact td { padding: 1.1mm 1.6mm; font-size: 8.7pt; }
+figure { margin: 3mm 0 6mm; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 2px; background: #fff; }
+figure img.plain { border: none; }
+figcaption { margin-top: 2mm; font-size: 8.9pt; color: var(--muted); text-align: center; }
+figure.narrow img { max-width: 74mm; }
+figure.medium img { max-width: 128mm; }
+figure.drawing img { max-width: 150mm; }
+.note, .warn, .tip { border: 1px solid var(--line); border-left-width: 4px; background: var(--soft-bg); padding: 2.6mm 3.4mm; margin: 3mm 0 4mm; font-size: 9.4pt; break-inside: avoid; }
+.note { border-left-color: var(--navy-2); }
+.tip  { border-left-color: var(--accent); }
+.warn { border-left-color: var(--warn); background: #fdf4f0; }
+.note .lbl, .warn .lbl, .tip .lbl { display: block; font-weight: 700; margin-bottom: 1mm; font-size: 9.4pt; }
+.note .lbl { color: var(--navy-2); }
+.tip  .lbl { color: var(--accent); }
+.warn .lbl { color: var(--warn); }
+code, .code { font-family: Consolas, "D2Coding", "Courier New", monospace; font-size: 9pt; background: #eef1f5; padding: .3mm 1.2mm; border-radius: 2px; }
+pre.code { display: block; padding: 2.6mm 3.4mm; background: #f2f4f7; border: 1px solid var(--line-2); border-radius: 2px; white-space: pre-wrap; word-break: break-all; margin: 2mm 0 4mm; font-size: 8.9pt; line-height: 1.5; break-inside: avoid; }
+.kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: .2mm 1.4mm; font-size: 8.8pt; background: #fff; }
+.badge { display: inline-block; padding: .2mm 1.8mm; border-radius: 8px; font-size: 8.4pt; font-weight: 600; border: 1px solid; }
+.badge.ro { color: #24527a; border-color: #9db9d4; background: #eaf2f9; }
+.small { font-size: 9pt; color: var(--muted); }
+.center { text-align: center; }
+.app-wire { width: 100%; max-width: 118mm; margin: 0 auto; background: #f7f8fa; border: 1px solid var(--line); border-radius: 8px; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<section class="cover">
+  <div class="kicker">USER MANUAL</div>
+  <h1>삼우 리튬 BMS 디스플레이<br>사용설명서</h1>
+  <div class="rule"></div>
+  <div class="sub">7인치 화면 · IP Finder · 웹 모니터 · 앱 펌웨어 업데이트 · SNMP OID</div>
+  <table class="cover-meta">
+    <tr><th>적용 제품</th><td>7인치 터치 디스플레이 (팩 1 · 팩 2 감시)</td></tr>
+    <tr><th>적용 대상</th><td>삼우 리튬 배터리 팩 / 썬일렉컴 · 삼우 현장</td></tr>
+    <tr><th>제조</th><td>IFTECH Co.,LTD</td></tr>
+    <tr><th>펌웨어 버전</th><td>V1.0.25</td></tr>
+    <tr><th>문서 버전</th><td>1.0</td></tr>
+    <tr><th>작성일</th><td>2026년 9월 12일</td></tr>
+  </table>
+  <div class="foot">본 설명서의 화면은 펌웨어 V1.0.25 기준이며, 버전에 따라 일부 항목이 다를 수 있습니다.</div>
+</section>
+
+<section class="toc">
+  <h2>목 차</h2>
+  <p class="small toc-hint">※ 항목을 클릭하면 해당 쪽으로 바로 이동합니다. (PDF에서도 동일하게 동작합니다.)</p>
+  <ol>
+    <li><a href="#p1">제1부 &nbsp;7인치 화면</a>
+      <ol>
+        <li><a href="#s1-1">1.1 이 장비가 하는 일</a></li>
+        <li><a href="#s1-2">1.2 메인 화면</a></li>
+        <li><a href="#s1-3">1.3 상태 램프와 하단 STATUS</a></li>
+        <li><a href="#s1-4">1.4 설정 화면</a></li>
+        <li><a href="#s1-5">1.5 일상 운전</a></li>
+      </ol>
+    </li>
+    <li><a href="#p2">제2부 &nbsp;IP Finder (PC 설정 프로그램)</a>
+      <ol>
+        <li><a href="#s2-1">2.1 개요 및 실행 방법</a></li>
+        <li><a href="#s2-2">2.2 화면 구성</a></li>
+        <li><a href="#s2-3">2.3 장비 검색 · 네트워크 설정</a></li>
+        <li><a href="#s2-4">2.4 옵션 상세와 문제 해결</a></li>
+      </ol>
+    </li>
+    <li><a href="#p3">제3부 &nbsp;웹 모니터링 화면</a>
+      <ol>
+        <li><a href="#s3-1">3.1 접속 및 로그인</a></li>
+        <li><a href="#s3-2">3.2 화면 구성과 메뉴</a></li>
+        <li><a href="#s3-3">3.3 BMS 모니터</a></li>
+        <li><a href="#s3-4">3.4 설정</a></li>
+        <li><a href="#s3-5">3.5 SNMP TEST</a></li>
+        <li><a href="#s3-6">3.6 도움말</a></li>
+        <li><a href="#s3-7">3.7 파일 업로드</a></li>
+      </ol>
+    </li>
+    <li><a href="#p4">제4부 &nbsp;앱으로 펌웨어 업데이트</a>
+      <ol>
+        <li><a href="#s4-1">4.1 업데이트 방식</a></li>
+        <li><a href="#s4-2">4.2 앱 설치</a></li>
+        <li><a href="#s4-3">4.3 앱으로 올리기</a></li>
+        <li><a href="#s4-4">4.4 Serial Bluetooth</a></li>
+      </ol>
+    </li>
+    <li><a href="#p5">제5부 &nbsp;SNMP OID 규격</a>
+      <ol>
+        <li><a href="#s5-1">5.1 트리 구조 개요</a></li>
+        <li><a href="#s5-2">5.2 팩 측정값</a></li>
+        <li><a href="#s5-3">5.3 셀 전압 · 온도</a></li>
+        <li><a href="#s5-4">5.4 조회 예시</a></li>
+      </ol>
+    </li>
+    <li><a href="#p6">제6부 &nbsp;하드웨어 사양</a>
+      <ol>
+        <li><a href="#s6-1">6.1 일반 사양</a></li>
+        <li><a href="#s6-2">6.2 인터페이스</a></li>
+      </ol>
+    </li>
+    <li><a href="#papx">부록</a>
+      <ol>
+        <li><a href="#apx-a">부록 A. 공장 출하 초기값</a></li>
+        <li><a href="#apx-b">부록 B. 문제 해결</a></li>
+        <li><a href="#apx-c">부록 C. 인쇄 안내</a></li>
+      </ol>
+    </li>
+  </ol>
+</section>
+
+<!-- ============================================================ 제1부 -->
+<section class="part">
+<h1 class="part-title" id="p1">제1부 &nbsp;7인치 화면</h1>
+
+<h2 id="s1-1">1.1 이 장비가 하는 일</h2>
+<p>디스플레이는 RS-485로 <strong>삼우 리튬 팩 2대</strong>(슬레이브 주소 1, 2)를 읽고, 7인치 화면에 전압·전류·온도를 보여 줍니다.
+이더넷으로는 <strong>SNMPv2c</strong>와 <strong>웹 모니터</strong>를 제공하므로 PC·상위 감시반에서 같은 값을 볼 수 있습니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:36mm">항목</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>배터리</td><td>삼우 리튬 팩 2대 (주소 1 · 2)</td></tr>
+    <tr><td>화면</td><td>7인치 컬러 터치. 백라이트는 항상 켜져 있습니다.</td></tr>
+    <tr><td>통신 (배터리)</td><td>RS-485, 9600 8N1 (표준 Modbus가 아닙니다)</td></tr>
+    <tr><td>통신 (상위)</td><td>이더넷 — SNMPv2c UDP 161, 웹(공장 포트 81), IP Finder UDP 1234</td></tr>
+    <tr><td>공장 IP</td><td><code>192.168.0.57</code> / <code>255.255.255.0</code> / 게이트웨이 <code>192.168.0.1</code></td></tr>
+    <tr><td>BLE 이름</td><td><code>IFTECH_SW_</code> + MAC</td></tr>
+    <tr><td>펌웨어 업데이트</td><td>앱(또는 Serial Bluetooth) → 재부팅 → Wi‑Fi OTA. 유선 이더넷으로는 .bin 을 올리지 않습니다.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s1-2">1.2 메인 화면</h2>
+<p>전원을 켜면 아래와 같은 메인 화면이 나옵니다. 값은 약 <strong>2초</strong>마다 갱신됩니다.</p>
+<figure>
+  <img src="img/lcd_01_main.jpg" alt="7인치 메인 화면">
+  <figcaption>그림 1-1. 메인 화면 예. 펌웨어 V1.0.25의 하단 문구는 <code>STATUS:#n 정상</code> / <code>통신끊김</code> 입니다. (사진은 이전 문구가 남아 있을 수 있습니다.)</figcaption>
+</figure>
+
+<h3>1.2.1 상단 제목</h3>
+<p>가운데 제목은 <strong>장치 이름 + 선택한 팩 번호</strong>입니다. 예: <code>BAT RACK1-1</code> → 장치 이름 <code>BAT RACK1</code>, 지금 보고 있는 팩이 <strong>1번</strong>.</p>
+
+<h3>1.2.2 왼쪽 — SYSTEM INFO / CELL INFO</h3>
+<table class="t fit">
+  <thead><tr><th style="width:28mm">표시</th><th>의미</th></tr></thead>
+  <tbody>
+    <tr><td><strong>AVG</strong></td><td>연결된 팩들의 팩 전압 평균 (V)</td></tr>
+    <tr><td><strong>AMP</strong></td><td>선택한 팩의 전류 (A). 부호는 BMS를 따릅니다.</td></tr>
+    <tr><td><strong>TEMP</strong></td><td>선택한 팩의 온도 평균 (°C)</td></tr>
+    <tr><td><strong>HVOL</strong></td><td>셀 중 가장 높은 전압 (V)</td></tr>
+    <tr><td><strong>LVOL</strong></td><td>셀 중 가장 낮은 전압 (V)</td></tr>
+    <tr><td><strong>DIFF</strong></td><td>HVOL − LVOL (mV). 셀 간 편차</td></tr>
+  </tbody>
+</table>
+<p><strong>설 정</strong> 버튼을 누르면 설정 화면으로 이동합니다.</p>
+
+<h3>1.2.3 가운데 — 셀 1 ~ 15</h3>
+<p>선택한 팩의 셀 전압입니다. 단위는 <strong>V</strong>입니다. 일부 칸에는 전압 아래 온도(°C)가 같이 나옵니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:24mm">칸</th><th>온도</th></tr></thead>
+  <tbody>
+    <tr><td>셀 1</td><td>온도 센서 1</td></tr>
+    <tr><td>셀 4</td><td>온도 센서 2</td></tr>
+    <tr><td>셀 8</td><td>온도 센서 3</td></tr>
+    <tr><td>셀 12</td><td>온도 센서 4</td></tr>
+  </tbody>
+</table>
+
+<h3>1.2.4 오른쪽 — 팩 선택</h3>
+<table class="t fit">
+  <thead><tr><th style="width:28mm">버튼</th><th>의미</th></tr></thead>
+  <tbody>
+    <tr><td><strong>#1 54.0V</strong></td><td>팩 1 전압. <strong>초록색</strong>이면 가운데에 이 팩이 표시됩니다.</td></tr>
+    <tr><td><strong>#2 52.8V</strong></td><td>팩 2 전압. 어두운 색이면 선택되지 않은 상태입니다.</td></tr>
+  </tbody>
+</table>
+<p>버튼을 누르면 가운데·왼쪽 정보가 해당 팩으로 바뀝니다. 제목 끝 숫자(<code>-1</code> / <code>-2</code>)와 하단 <code>STATUS:#n</code> 도 같이 바뀝니다.</p>
+<p class="small">화면 위의 작은 빨간 원은 지금 손가락이 닿은 위치입니다. 오래 화면을 안 만지면 사라집니다.</p>
+
+<h2 id="s1-3">1.3 상태 램프와 하단 STATUS</h2>
+<p>하단 <strong>통신 / 충전 / 방전 / 경고</strong> 네 개입니다. 꺼져 있으면 회색, 켜져 있으면 색이 들어갑니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:22mm">램프</th><th style="width:16mm" class="c">색</th><th>켜질 때</th></tr></thead>
+  <tbody>
+    <tr><td><strong>통신</strong></td><td class="c">초록</td><td>팩 1 또는 팩 2에서 방금 정상 응답을 받았을 때 (짧게 점멸)</td></tr>
+    <tr><td><strong>충전</strong></td><td class="c">노랑</td><td>팩 1 또는 팩 2의 충전 릴레이가 켜져 있을 때</td></tr>
+    <tr><td><strong>방전</strong></td><td class="c">파랑</td><td>팩 1 또는 팩 2의 방전 릴레이가 켜져 있을 때</td></tr>
+    <tr><td><strong>경고</strong></td><td class="c">빨강</td><td>팩 1 또는 팩 2의 고장·보호·경고 플래그가 하나라도 0이 아닐 때</td></tr>
+  </tbody>
+</table>
+<p>충전과 방전이 동시에 켜질 수 있습니다. BMS 릴레이 비트를 그대로 보여 주기 때문입니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:28mm">하단 위치</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>왼쪽</td><td>IFTECH Co.,LTD</td></tr>
+    <tr><td>가운데</td><td><code>STATUS:#1 정상</code> 또는 <code>STATUS:#n 통신끊김</code> / <code>경보#n:원인</code></td></tr>
+    <tr><td>오른쪽</td><td>펌웨어 버전</td></tr>
+  </tbody>
+</table>
+<p><code>정상</code>이면 그 팩 응답이 정상입니다. <code>통신끊김</code>이면 그 팩과 통신이 안 된 상태입니다. 마지막에 받은 값은 화면에 남을 수 있습니다.</p>
+
+<h2 id="s1-4">1.4 설정 화면</h2>
+<p>메인에서 <strong>설 정</strong>을 누릅니다. 제목은 <code>BMS SETTING</code>입니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:32mm">항목</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><strong>IPADDRESS</strong></td><td>이 디스플레이의 고정 IP (네 칸)</td></tr>
+    <tr><td><strong>SUBNET</strong></td><td>서브넷 마스크</td></tr>
+    <tr><td><strong>GATEWAY</strong></td><td>게이트웨이</td></tr>
+    <tr><td><strong>Device Name</strong></td><td>메인 상단 제목에 쓰는 이름 (예: BAT RACK1)</td></tr>
+  </tbody>
+</table>
+<table class="t fit">
+  <thead><tr><th style="width:24mm">버튼</th><th>동작</th></tr></thead>
+  <tbody>
+    <tr><td><strong>저 장</strong></td><td>위 값을 내부에 저장합니다. IP를 바꿨으면 저장 후 재기동이 필요할 수 있습니다.</td></tr>
+    <tr><td><strong>메 인</strong></td><td>저장하지 않고 메인 화면으로 돌아갑니다.</td></tr>
+  </tbody>
+</table>
+<p>Date Time 칸은 화면에 있으나, 이 버전에서는 운전용 시계로 쓰지 않습니다. 시각은 웹 설정 또는 앱 <strong>시간설정</strong>으로 맞출 수 있습니다.</p>
+
+<h2 id="s1-5">1.5 일상 운전</h2>
+<ol>
+  <li>전원과 이더넷, RS-485가 연결된 것을 확인합니다.</li>
+  <li>통신 램프가 간헐적으로 초록으로 깜빡이는지 봅니다.</li>
+  <li><strong>#1</strong>, <strong>#2</strong>를 눌러 두 팩 전압이 나오는지 확인합니다.</li>
+  <li>DIFF가 갑자기 커지거나 경고 램프가 켜지면 해당 팩의 셀·온도를 확인합니다.</li>
+  <li>하단이 <code>통신끊김</code>이면 그 팩의 전원, 주소(1 또는 2), RS-485 배선·종단을 확인합니다.</li>
+</ol>
+</section>
+
+<!-- ============================================================ 제2부 -->
+<section class="part">
+<h1 class="part-title" id="p2">제2부 &nbsp;IP Finder (PC 설정 프로그램)</h1>
+
+<h2 id="s2-1">2.1 개요 및 실행 방법</h2>
+<p><strong>IP Finder</strong>는 PC에서 실행하는 설정 도구입니다. 같은 네트워크(LAN)에 연결된 디스플레이를
+<strong>UDP 브로드캐스트(포트 1234)</strong>로 찾아내고, IP·서브넷·게이트웨이와 <strong>웹 사용 여부·웹 포트</strong>를 원격으로 바꿉니다.</p>
+<p>모듈의 현재 IP를 모르더라도 <strong>같은 네트워크에 연결만 되어 있으면 찾을 수 있습니다.</strong> 처음 설치할 때 가장 먼저 쓰는 프로그램입니다.</p>
+<table class="t fit">
+  <tr><th style="width:32mm">실행 파일</th><td><code>python/release/IPFinder.exe</code> (별도 설치 없음. 더블 클릭)</td></tr>
+  <tr><th>소스</th><td><code>python/SnmpFinder.py</code> — <code>python python/SnmpFinder.py</code></td></tr>
+  <tr><th>다시 만들기</th><td><code>python\makeExe.ps1</code></td></tr>
+  <tr><th>사용 포트</th><td>UDP 1234 (브로드캐스트 송·수신)</td></tr>
+  <tr><th>창 제목</th><td>IP Finder — 리튬 BMS</td></tr>
+</table>
+<div class="note">
+  <span class="lbl">사전 준비</span>
+  ① 디스플레이와 PC를 <strong>같은 스위치/공유기</strong>에 랜 케이블로 연결합니다.<br>
+  ② 전원을 인가하고 약 20초 이상 기다립니다.<br>
+  ③ Windows 방화벽에서 이 프로그램의 <strong>UDP 통신을 허용</strong>합니다.
+</div>
+<div class="warn">
+  <span class="lbl">이 제품과 TRAP</span>
+  Finder 화면의 TRAP ENABLE · TRAP IP1~5 · 트랩 테스트는 다른 제품과 같은 공통 도구입니다.
+  <strong>본 디스플레이는 SNMP TRAP을 보내지 않습니다.</strong> 웹 ENABLE / WEB PORT 만 적용됩니다.
+</div>
+
+<h2 id="s2-2">2.2 화면 구성</h2>
+<figure>
+  <img src="img/ipfinder_01_start.png" alt="IP Finder 실행 화면">
+  <figcaption>그림 2-1. IP Finder 실행 화면</figcaption>
+</figure>
+<table class="t fit">
+  <thead><tr><th style="width:36mm">구역</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><strong>① 네트워크 정보</strong></td>
+        <td>선택한 장비의 <strong>IPADDRESS · GATEWAY · SUBNET · MAC ADDR · VERSION</strong>.
+            설정을 바꿀 때 이 칸을 수정합니다. VERSION은 읽기 전용입니다.</td></tr>
+    <tr><td><strong>② TRAP · 웹 서비스</strong></td>
+        <td><strong>WEB ENABLE · WEB PORT</strong>를 지정합니다. TRAP 칸은 이 제품에서 사용하지 않습니다.
+            아래쪽에 <strong>트랩 테스트 · 설정 적용 · 검색</strong> 버튼이 있습니다.</td></tr>
+    <tr><td><strong>③ 발견된 장비</strong></td>
+        <td>검색으로 응답한 목록입니다. <strong>행을 클릭하면 ①·②에 값이 채워집니다.</strong>
+            NOTE 열에는 장치 이름(기본 <code>BAT RACK1</code>)이 보입니다.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s2-3">2.3 장비 검색 · 네트워크 설정</h2>
+<figure>
+  <img src="img/ipfinder_02_found.png" alt="IP Finder 검색 결과">
+  <figcaption>그림 2-2. IP Finder — [검색]을 누르면 아래 목록에 IP · MAC · NOTE(장치 이름)가 나타난다</figcaption>
+</figure>
+<table class="t fit">
+  <thead><tr><th class="c" style="width:12mm">순서</th><th>작업 내용</th></tr></thead>
+  <tbody>
+    <tr><td class="c"><strong>1</strong></td><td><strong>[검색]</strong>을 누릅니다.</td></tr>
+    <tr><td class="c"><strong>2</strong></td><td>설정할 장비의 <strong>행을 클릭</strong>합니다. MAC ADDR 칸이 채워졌는지 확인합니다.</td></tr>
+    <tr><td class="c"><strong>3</strong></td><td><strong>IPADDRESS · SUBNET · GATEWAY</strong>를 현장 망에 맞게 수정합니다.</td></tr>
+    <tr><td class="c"><strong>4</strong></td><td>필요하면 <strong>WEB ENABLE · WEB PORT</strong>를 함께 설정합니다. (공장 포트 81)</td></tr>
+    <tr><td class="c"><strong>5</strong></td><td><strong>[설정 적용]</strong>을 누릅니다. 장비가 저장한 뒤 <strong>재부팅</strong>합니다. 약 20~30초 기다립니다.</td></tr>
+    <tr><td class="c"><strong>6</strong></td><td>다시 <strong>[검색]</strong>을 눌러 변경된 IP로 표시되는지 확인합니다.</td></tr>
+  </tbody>
+</table>
+<div class="warn">
+  <span class="lbl">주의</span>
+  ① 새 IP가 PC와 다른 대역이면 웹으로 접속할 수 없습니다. Finder는 브로드캐스트를 쓰므로 검색은 됩니다.<br>
+  ② 같은 네트워크에 <strong>동일한 IP가 있으면 안 됩니다.</strong><br>
+  ③ <strong>WEB ENABLE을 해제하면</strong> 웹 화면에 접속할 수 없습니다. Finder로만 되돌릴 수 있습니다.
+</div>
+
+<h2 id="s2-4">2.4 옵션 상세와 문제 해결</h2>
+<table class="t fit">
+  <thead><tr><th style="width:30mm">항목</th><th style="width:20mm" class="c">기본값</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><strong>WEB ENABLE</strong></td><td class="c">사용</td>
+        <td>내장 웹 서버 사용 여부. 해제하면 EEPROM <code>WEBSERVERPORT=0</code> 이 됩니다.</td></tr>
+    <tr><td><strong>WEB PORT</strong></td><td class="c">81</td>
+        <td>1~65535. 80이 아니면 브라우저에서 <code>http://IP:포트</code> 로 접속합니다.</td></tr>
+  </tbody>
+</table>
+<table class="t fit">
+  <thead><tr><th style="width:48mm">증상</th><th>확인 사항</th></tr></thead>
+  <tbody>
+    <tr><td>[검색]을 눌러도 목록이 비어 있다</td>
+        <td>전원·랜 케이블, 같은 스위치, Windows 방화벽, 무선 랜을 잠시 끄고 재시도, 전원 인가 후 20초</td></tr>
+    <tr><td>[설정 적용]을 눌러도 값이 안 바뀐다</td>
+        <td>MAC ADDR가 비어 있으면 명령이 무시됩니다. 목록에서 행을 먼저 클릭하십시오.</td></tr>
+    <tr><td>설정 후 웹이 안 된다</td>
+        <td>새 IP가 PC와 같은 대역인지, WEB ENABLE, WEB PORT(<code>http://IP:포트</code>)</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ============================================================ 제3부 -->
+<section class="part">
+<h1 class="part-title" id="p3">제3부 &nbsp;웹 모니터링 화면</h1>
+
+<h2 id="s3-1">3.1 접속 및 로그인</h2>
+<p>웹 브라우저(Chrome 권장) 주소창에 디스플레이의 IP와 포트를 입력합니다. 주소는 <strong>대소문자를 가리지 않습니다</strong> (<code>/Login.html</code> 도 됩니다).</p>
+<pre class="code">http://192.168.0.57:81/          ← 공장 기본
+http://192.168.0.65:81/          ← 현장에서 IP를 바꾼 예</pre>
+<figure class="narrow">
+  <img src="img/web_01_login.png" alt="웹 로그인 화면">
+  <figcaption>그림 3-1. 로그인 화면 — 리튬 BMS 웹 모니터</figcaption>
+</figure>
+<table class="t fit">
+  <thead><tr><th style="width:32mm">항목</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>User ID / Password</td><td>공장 출하 기본값 <strong>admin / admin</strong></td></tr>
+    <tr><td>로그인 버튼</td><td>성공하면 세션이 만들어지고 <strong>BMS 모니터</strong>로 이동합니다.</td></tr>
+    <tr><td>세션 유지</td><td><strong>7일</strong>. 모니터 화면 우측 상단 <strong>로그아웃</strong>으로 즉시 해제합니다.</td></tr>
+  </tbody>
+</table>
+<div class="warn">
+  <span class="lbl">보안 권고</span>
+  설치 후 반드시 기본 비밀번호를 바꾸십시오. 변경은 <strong>설정</strong> 화면의 웹 아이디·웹 암호에서 합니다.
+</div>
+
+<h2 id="s3-2">3.2 화면 구성과 메뉴</h2>
+<p>로그인 후 모든 화면은 <strong>어두운 배경 + 상단 메뉴</strong>입니다. 메뉴는 <strong>모니터 · 설정 · SNMP · 도움말 · 업로드</strong> 입니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:28mm">메뉴</th><th>내용</th></tr></thead>
+  <tbody>
+    <tr><td>모니터</td><td>팩 1·2 실시간 값 (3.3절)</td></tr>
+    <tr><td>설정</td><td>IP·웹·OTA·계정 (3.4절)</td></tr>
+    <tr><td>SNMP</td><td>OID 조회 시험 (3.5절)</td></tr>
+    <tr><td>도움말</td><td>장비 내장 간이 설명서 (3.6절)</td></tr>
+    <tr><td>업로드</td><td>HTML/CSS/JS 올리기 (3.7절)</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s3-3">3.3 BMS 모니터</h2>
+<p>7인치와 같은 항목을 팩마다 카드로 보여 줍니다. 화면은 <strong>약 2초마다 자동 갱신</strong>됩니다.</p>
+<figure>
+  <img src="img/web_02_monitor.png" alt="BMS 모니터">
+  <figcaption>그림 3-2. BMS 모니터 — 팩 1 · 팩 2</figcaption>
+</figure>
+<table class="t">
+  <thead><tr><th style="width:32mm">항목</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>큰 전압</td><td>팩 전압 (V). 통신 실패면 <code>-- V</code></td></tr>
+    <tr><td>SOC / SOH</td><td>잔량 · 수명 (%)</td></tr>
+    <tr><td>전류 / 용량</td><td>A, Ah</td></tr>
+    <tr><td>HVOL / LVOL / 셀차</td><td>유효 셀(100 mV 이상) 기준 최고·최저·편차</td></tr>
+    <tr><td>통신·충전·방전·경고</td><td>7인치와 같은 램프</td></tr>
+    <tr><td>셀 격자</td><td>셀 1~15 전압(V). 셀 1·4·8·12에 온도</td></tr>
+  </tbody>
+</table>
+<p class="small">상단에는 장치 이름, IP, 펌웨어 버전, ERR(RS-485 타임아웃 누적)이 표시됩니다.</p>
+
+<h2 id="s3-4">3.4 설정</h2>
+<figure>
+  <img src="img/web_03_settings.png" alt="설정">
+  <figcaption>그림 3-3. 설정</figcaption>
+</figure>
+<table class="t fit">
+  <thead><tr><th style="width:34mm">항목</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td>장치 이름</td><td>7인치 상단 제목과 같습니다.</td></tr>
+    <tr><td>시각</td><td>RTC (YYYY-MM-DD HH:MM:SS)</td></tr>
+    <tr><td>IP / 서브넷 / 게이트웨이</td><td>고정 이더넷 주소</td></tr>
+    <tr><td>웹 사용 / 웹 포트</td><td>해제하면 웹에 접속할 수 없습니다.</td></tr>
+    <tr><td>OTA SSID / 암호</td><td>앱 CLI의 <code>ssid</code> / <code>pass</code>와 같습니다. 암호를 비우면 유지, <code>none</code>이면 개방 AP.</td></tr>
+    <tr><td>웹 아이디 / 웹 암호</td><td>로그인 계정. <strong>둘 다 넣어야</strong> 바뀝니다. 기본 admin / admin.</td></tr>
+    <tr><td>MAC · 펌웨어</td><td>확인용 (변경 불가)</td></tr>
+  </tbody>
+</table>
+<div class="warn">
+  <span class="lbl">저장 시 동작</span>
+  <strong>[저장]</strong>을 누르면 저장됩니다. IP 또는 웹 포트/사용 여부가 바뀌면 <strong>즉시 재부팅</strong>합니다.
+  약 20~30초 후 <strong>변경된 주소로 다시 접속</strong>하십시오.
+</div>
+
+<h2 id="s3-5">3.5 SNMP TEST</h2>
+<p>관리 서버를 연결하기 전에, 장비가 특정 OID에 어떤 값을 돌려주는지 웹에서 확인합니다.
+값은 장비 안 레지스터를 읽으며, 외부 SNMP 데몬을 다시 열지 않습니다.</p>
+<figure>
+  <img src="img/web_04_snmp.png" alt="SNMP TEST">
+  <figcaption>그림 3-4. SNMP TEST — 팩1 전압 OID 조회 예 (값 540 = 54.0 V)</figcaption>
+</figure>
+<ol>
+  <li><strong>Object ID</strong>에 OID를 입력합니다. 예: <code>.1.3.6.1.2.1.32.1.8.0</code></li>
+  <li><strong>[GET]</strong>을 누릅니다. (페이지를 열면 기본 OID를 한 번 조회합니다.)</li>
+  <li>아래 표의 <strong>행을 클릭</strong>하면 입력란에 해당 OID가 들어갑니다.</li>
+</ol>
+<div class="note">
+  <span class="lbl">주의</span>
+  등록된 OID만 조회됩니다. 마지막 <code>.0</code>을 빠뜨리면 조회되지 않습니다.
+</div>
+
+<h2 id="s3-6">3.6 도움말</h2>
+<p>장비에 내장된 간이 설명서입니다. 플래시 용량 때문에 <strong>그림은 넣지 않습니다.</strong>
+그림과 인쇄본은 본 HTML(<code>doc/사용설명서/manual/사용설명서.html</code>)을 사용하십시오.</p>
+<figure>
+  <img src="img/web_05_help.png" alt="도움말">
+  <figcaption>그림 3-5. 도움말 화면</figcaption>
+</figure>
+
+<h2 id="s3-7">3.7 파일 업로드</h2>
+<p>메뉴에는 없고 주소를 직접 입력합니다.</p>
+<table class="t fit">
+  <thead><tr><th style="width:52mm">주소</th><th>용도</th></tr></thead>
+  <tbody>
+    <tr><td><code>http://IP:포트/fileUpload</code></td>
+        <td><strong>웹 화면 파일(HTML/CSS/JS)</strong> 업로드. 여러 파일을 한 번에 선택할 수 있습니다.</td></tr>
+    <tr><td><code>http://IP:포트/serverIndex</code></td>
+        <td>이더넷 펌웨어 업로드는 <strong>쓰지 않습니다.</strong> 안내 페이지만 있습니다.</td></tr>
+  </tbody>
+</table>
+<figure class="medium">
+  <img src="img/web_06_fileupload.png" alt="파일 업로드">
+  <figcaption>그림 3-6. 웹 파일 업로드. 펌웨어 .bin 은 이 경로를 쓰지 마십시오.</figcaption>
+</figure>
+<div class="warn">
+  <span class="lbl">경고</span>
+  펌웨어 <code>.bin</code> 은 <strong>제4부 앱 Wi‑Fi OTA</strong>로만 올립니다. 업로드 중 전원을 끄지 마십시오.
+  HTML을 올릴 때는 저장소 <code>UploadFiles/</code> 만 사용합니다. jQuery / svg / fileUpload.html 은 넣지 않습니다.
+</div>
+</section>
+
+<!-- ============================================================ 제4부 -->
+<section class="part">
+<h1 class="part-title" id="p4">제4부 &nbsp;앱으로 펌웨어 업데이트</h1>
+
+<h2 id="s4-1">4.1 업데이트 방식</h2>
+<p>펌웨어는 <strong>블루투스 → 재부팅 → Wi‑Fi</strong> 로 받습니다. 유선 이더넷으로는 펌웨어를 올리지 않습니다.
+<strong>BLE와 Wi‑Fi를 동시에 켜지 않습니다.</strong></p>
+<table class="t fit">
+  <tr><th style="width:36mm">앱 APK</th><td><code>IFTECH_SAMWOO_App/release/IFTECH_SAMWOO_App.apk</code></td></tr>
+  <tr><th>앱 이름 / 패키지</th><td>IFTECH SAMWOO &nbsp;/&nbsp; <code>com.iftech.iftech_samwoo_app</code></td></tr>
+  <tr><th>장비 BLE 이름</th><td><code>IFTECH_SW_</code> + MAC &nbsp;(<code>IFTECH_</code> 로 시작하면 검색됩니다)</td></tr>
+  <tr><th>서버</th><td><code>http://ift.iptime.org:81/Esp32UploadFirmware/esp32_samwoo.json</code></td></tr>
+</table>
+<p>서버 JSON의 <code>latest</code>가 장비 <code>VERSION</code>보다 클 때만 받아 플래시합니다. 이미 최신이거나 실패하면 메시지를 찍고 배터리 감시 화면으로 들어갑니다.</p>
+
+<h2 id="s4-2">4.2 앱 설치</h2>
+<ol>
+  <li>APK를 휴대폰으로 복사합니다.</li>
+  <li>Android에서 <strong>알 수 없는 출처</strong> 설치를 허용합니다.</li>
+  <li><strong>IFTECH SAMWOO</strong>를 설치·실행합니다. 블루투스·위치 권한을 허용합니다.</li>
+</ol>
+<p>다시 만들 때: <code>IFTECH_SAMWOO_App\build_release.ps1</code></p>
+
+<h2 id="s4-3">4.3 앱으로 올리기</h2>
+<figure>
+<svg class="app-wire" viewBox="0 0 420 210" role="img" aria-label="앱 업데이트 순서">
+  <rect x="8" y="16" width="92" height="150" rx="8" fill="#fff" stroke="#1f3864"/>
+  <text x="54" y="40" text-anchor="middle" font-size="11" fill="#1f3864" font-weight="700">1 연결</text>
+  <text x="54" y="70" text-anchor="middle" font-size="10" fill="#333">연결 버튼</text>
+  <text x="54" y="90" text-anchor="middle" font-size="10" fill="#333">BLE SCAN</text>
+  <text x="54" y="110" text-anchor="middle" font-size="9" fill="#5b6470">IFTECH_SW_</text>
+  <rect x="118" y="16" width="92" height="150" rx="8" fill="#fff" stroke="#1f3864"/>
+  <text x="164" y="40" text-anchor="middle" font-size="11" fill="#1f3864" font-weight="700">2 version</text>
+  <text x="164" y="80" text-anchor="middle" font-size="10" fill="#333">지금 버전</text>
+  <text x="164" y="100" text-anchor="middle" font-size="9" fill="#5b6470">VERSION : 1.0.25</text>
+  <rect x="228" y="16" width="92" height="150" rx="8" fill="#fff" stroke="#1f3864"/>
+  <text x="274" y="40" text-anchor="middle" font-size="11" fill="#1f3864" font-weight="700">3 Wi-Fi</text>
+  <text x="274" y="74" text-anchor="middle" font-size="9" fill="#333">SSID / 암호</text>
+  <text x="274" y="94" text-anchor="middle" font-size="9" fill="#333">장비로 전송</text>
+  <rect x="338" y="16" width="74" height="150" rx="8" fill="#fff" stroke="#9a3412"/>
+  <text x="375" y="40" text-anchor="middle" font-size="11" fill="#9a3412" font-weight="700">4 update</text>
+  <text x="375" y="80" text-anchor="middle" font-size="9" fill="#333">재부팅</text>
+  <text x="375" y="100" text-anchor="middle" font-size="9" fill="#333">Wi-Fi OTA</text>
+</svg>
+  <figcaption>그림 4-1. 앱 업데이트 순서</figcaption>
+</figure>
+<table class="t">
+  <thead><tr><th class="c" style="width:12mm">순서</th><th>작업</th></tr></thead>
+  <tbody>
+    <tr><td class="c"><strong>1</strong></td><td>휴대폰 <strong>모바일 핫스팟</strong>을 켭니다. 보안은 <strong>WPA2</strong>. 또는 인터넷이 되는 현장 공유기를 씁니다.</td></tr>
+    <tr><td class="c"><strong>2</strong></td><td>앱에서 <strong>연결</strong> → Bluetooth LE SCAN. <code>IFTECH_SW_xx:xx:xx:xx:xx:xx</code> 를 고릅니다.</td></tr>
+    <tr><td class="c"><strong>3</strong></td><td>연결되면 <strong>version</strong> 칩을 눌러 지금 버전을 확인합니다.</td></tr>
+    <tr><td class="c"><strong>4</strong></td><td><strong>Wi-Fi 설정</strong>에서 <strong>주변 Wi-Fi 검색해서 선택</strong>으로 AP를 고르고 암호를 넣습니다.
+        iPhone은 목록 검색이 안 될 수 있으니 SSID를 직접 넣습니다.</td></tr>
+    <tr><td class="c"><strong>5</strong></td><td><strong>SSID / PASS 장비로 전송</strong>. 로그에 <code>SSID :</code> / <code>PASS :</code> 가 나오면 저장된 것입니다.</td></tr>
+    <tr><td class="c"><strong>6</strong></td><td>빠른 명령의 주황 <strong>update</strong>를 누르고 확인합니다. 장비가 재부팅하며 BLE는 끊깁니다.</td></tr>
+    <tr><td class="c"><strong>7</strong></td><td>장비가 Wi‑Fi로 서버에서 펌웨어를 받습니다. 성공하면 새 버전으로 다시 뜹니다.</td></tr>
+    <tr><td class="c"><strong>8</strong></td><td>앱에서 다시 연결한 뒤 <strong>version</strong>. 나온 값이 올린 펌웨어와 같으면 완료입니다.</td></tr>
+  </tbody>
+</table>
+<p>빠른 명령 칩: <code>help</code> · <code>version</code> · <code>status</code> · <code>ip</code> · <code>mac</code> · <code>name</code> · <code>ssid?</code> · <code>time?</code> · <strong>시간설정</strong> · <strong>update</strong> · <strong>reboot</strong></p>
+
+<h2 id="s4-4">4.4 Serial Bluetooth</h2>
+<p>Play 스토어 <strong>Serial Bluetooth</strong> 로도 같은 CLI를 보낼 수 있습니다.</p>
+<pre class="code">ssid 핫스팟이름
+pass 핫스팟암호
+version
+update</pre>
+<p>재접속 후 다시 <code>version</code>. 개방 AP이면 <code>pass none</code> 입니다.</p>
+<table class="t compact">
+  <thead><tr><th style="width:28mm">명령</th><th>동작</th></tr></thead>
+  <tbody>
+    <tr><td><code>version</code></td><td><code>VERSION : x.y.z</code></td></tr>
+    <tr><td><code>ssid</code> / <code>ssid 이름</code></td><td>저장된 SSID 표시 / 저장</td></tr>
+    <tr><td><code>pass 암호</code></td><td>비밀번호 저장 (<code>none</code>=개방)</td></tr>
+    <tr><td><code>ip</code> / <code>ip a.b.c.d</code></td><td>이더넷 주소 확인 / 저장 (재부팅 후 적용)</td></tr>
+    <tr><td><code>name</code> / <code>status</code> / <code>mac</code></td><td>장치 이름 · 팩 상태 · MAC</td></tr>
+    <tr><td><code>time</code> / <code>time Y M D h m s</code></td><td>RTC 시각</td></tr>
+    <tr><td><code>update</code></td><td>재부팅 후 Wi‑Fi OTA</td></tr>
+    <tr><td><code>reboot</code> / <code>help</code></td><td>재부팅 / 명령 목록</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ============================================================ 제5부 -->
+<section class="part">
+<h1 class="part-title" id="p5">제5부 &nbsp;SNMP OID 규격</h1>
+<p>본 장은 <strong>SAMWOO-BAT-MIB</strong> 를 설명합니다. 관리 서버(NMS) 연동 시 이 장을 기준으로 하십시오.
+MIB 파일: <code>mib/SAMWOO_BAT_MIB_VER_01.MIB</code></p>
+
+<h2 id="s5-1">5.1 트리 구조 개요</h2>
+<table class="t fit">
+  <thead><tr><th style="width:34mm">구분</th><th>값</th></tr></thead>
+  <tbody>
+    <tr><td>MIB 이름</td><td>SAMWOO-BAT-MIB</td></tr>
+    <tr><td>SNMP 버전</td><td>SNMPv2c</td></tr>
+    <tr><td>조회 포트</td><td>UDP <strong>161</strong></td></tr>
+    <tr><td>Community (읽기)</td><td><code>public</code></td></tr>
+    <tr><td>팩 1</td><td><code>1.3.6.1.2.1.32.1</code></td></tr>
+    <tr><td>팩 2</td><td><code>1.3.6.1.2.1.32.2</code></td></tr>
+    <tr><td>인스턴스</td><td>스칼라 객체는 끝에 <strong><code>.0</code></strong> 을 붙입니다.</td></tr>
+    <tr><td>접근 권한</td><td>측정값은 <span class="badge ro">RO</span> Integer32 (원본 레지스터 정수)</td></tr>
+  </tbody>
+</table>
+<p>Walk는 <code>pack1Value</code>, <code>pack2Value</code>, <code>batStatus</code>, <code>batCommon</code> 단위로 하면 끝에서 멈춥니다.
+트리 끝의 0 값(<code>.32.3.1.0</code>, <code>.33.0</code>, <code>.1.3.6.1.2.2.0</code>)은 <strong>종결용</strong>이며 배터리 데이터가 아닙니다.</p>
+<div class="note">
+  <span class="lbl">TRAP</span>
+  본 펌웨어는 SNMP TRAP을 발송하지 않습니다. NMS는 GET / Walk 로 주기 감시하십시오.
+</div>
+
+<h2 id="s5-2">5.2 팩 측정값</h2>
+<p class="small">아래 OID는 팩 1 기준입니다. 팩 2는 <code>32.1</code>을 <code>32.2</code>로 바꿉니다.</p>
+<table class="t">
+  <thead><tr>
+    <th style="width:42mm">OID</th><th style="width:28mm">항목</th><th>해석</th>
+  </tr></thead>
+  <tbody>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.3.0</td><td>SOC</td><td>%</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.9.0</td><td>SOH</td><td>%</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.8.0</td><td>팩 전압</td><td>0.1 V (예: 540 → <strong>54.0 V</strong>)</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.2.0</td><td>전류</td><td>0.1 A, 부호 있음</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.4.0</td><td>용량</td><td>0.1 Ah</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.11.0</td><td>최고 셀</td><td>mV</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.12.0</td><td>최저 셀</td><td>mV</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.13.0</td><td>최고 온도</td><td>0.1 ℃</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.14.0</td><td>최저 온도</td><td>0.1 ℃</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.15.0</td><td>셀 수</td><td>개</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.7.0</td><td>BMS 버전</td><td>정수</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.6.4.0</td><td>충전 릴레이</td><td>0/1</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.6.5.0</td><td>방전 릴레이</td><td>0/1</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.6.1.0</td><td>Fault</td><td>플래그</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.10.0</td><td>Protect</td><td>플래그</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.32.1.6.2.0</td><td>Warning</td><td>플래그</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.1.1.0</td><td>sysDescr</td><td>문자열</td></tr>
+    <tr><td class="oid">.1.3.6.1.2.1.1.5.0</td><td>sysName</td><td>웹 조회 시 장치 이름, SNMP 에이전트는 <code>BAT-DISPLAY</code></td></tr>
+  </tbody>
+</table>
+
+<h2 id="s5-3">5.3 셀 전압 · 온도</h2>
+<p>셀 전압은 <strong>mV</strong>, 온도는 <strong>0.1 ℃</strong> 정수입니다.</p>
+<table class="t fit">
+  <tr><th style="width:34mm">셀 N 전압</th><td><code>.1.3.6.1.2.1.32.<b>P</b>.1.<b>N</b>.0</code> &nbsp; P=1 또는 2, N=1~16</td></tr>
+  <tr><th>온도 N</th><td><code>.1.3.6.1.2.1.32.<b>P</b>.5.<b>N</b>.0</code> &nbsp; N=1~8</td></tr>
+</table>
+<table class="t compact">
+  <thead><tr>
+    <th class="c">셀</th><th class="c">팩1 OID</th><th class="c">셀</th><th class="c">팩1 OID</th>
+  </tr></thead>
+  <tbody>
+    <tr><td class="c">#1</td><td class="c oid">.32.1.1.1.0</td><td class="c">#9</td><td class="c oid">.32.1.1.9.0</td></tr>
+    <tr><td class="c">#2</td><td class="c oid">.32.1.1.2.0</td><td class="c">#10</td><td class="c oid">.32.1.1.10.0</td></tr>
+    <tr><td class="c">#3</td><td class="c oid">.32.1.1.3.0</td><td class="c">#11</td><td class="c oid">.32.1.1.11.0</td></tr>
+    <tr><td class="c">#4</td><td class="c oid">.32.1.1.4.0</td><td class="c">#12</td><td class="c oid">.32.1.1.12.0</td></tr>
+    <tr><td class="c">#5</td><td class="c oid">.32.1.1.5.0</td><td class="c">#13</td><td class="c oid">.32.1.1.13.0</td></tr>
+    <tr><td class="c">#6</td><td class="c oid">.32.1.1.6.0</td><td class="c">#14</td><td class="c oid">.32.1.1.14.0</td></tr>
+    <tr><td class="c">#7</td><td class="c oid">.32.1.1.7.0</td><td class="c">#15</td><td class="c oid">.32.1.1.15.0</td></tr>
+    <tr><td class="c">#8</td><td class="c oid">.32.1.1.8.0</td><td class="c">#16</td><td class="c oid">.32.1.1.16.0</td></tr>
+  </tbody>
+</table>
+<p class="small">표의 OID는 <code>.1.3.6.1.2.1</code> 을 생략한 표기입니다. 조회 시 앞에 붙이고 끝에 이미 <code>.0</code>이 있습니다.</p>
+
+<h2 id="s5-4">5.4 조회 예시</h2>
+<pre class="code"># 팩1 전압 (정수 540 → 54.0 V)
+snmpget -v2c -c public 192.168.0.57 .1.3.6.1.2.1.32.1.8.0
+
+# 팩1 SOC
+snmpget -v2c -c public 192.168.0.57 .1.3.6.1.2.1.32.1.3.0
+
+# 팩1 트리 Walk
+snmpwalk -v2c -c public 192.168.0.57 .1.3.6.1.2.1.32.1</pre>
+<p>도구가 없으면 웹 <strong>SNMP TEST</strong>(3.5절)에서 같은 값을 확인할 수 있습니다.
+저장소 <code>python/snmp_check.py 192.168.0.65</code> 로도 확인할 수 있습니다.</p>
+<div class="tip">
+  <span class="lbl">NMS 권장 감시</span>
+  ① 팩1·2 전압 <code>.8.0</code> &nbsp; ② SOC <code>.3.0</code> &nbsp; ③ Fault / Protect / Warning<br>
+  웹 모니터의 ERR이 계속 늘면 RS-485를 먼저 점검하십시오.
+</div>
+</section>
+
+<!-- ============================================================ 제6부 -->
+<section class="part">
+<h1 class="part-title" id="p6">제6부 &nbsp;하드웨어 사양</h1>
+
+<h2 id="s6-1">6.1 일반 사양</h2>
+<table class="t fit">
+  <thead><tr><th style="width:44mm">항목</th><th>규격</th></tr></thead>
+  <tbody>
+    <tr><td>보드</td><td>Sunton ESP32-8048S070 (ESP32-S3, 7인치 RGB 터치)</td></tr>
+    <tr><td>전원</td><td>보드 실크 <strong>0 / +48</strong> (POWER1 또는 POWER2 중 하나)</td></tr>
+    <tr><td>이더넷</td><td>WIZ610 / W6100 SPI, RJ45 (TCP/IP)</td></tr>
+    <tr><td>배터리 통신</td><td>RS-485, 9600 8N1</td></tr>
+    <tr><td>터치</td><td>GT911 (I2C). RTC(DS1307)와 버스 공유</td></tr>
+    <tr><td>SNMP / 웹 / Finder</td><td>UDP 161 / HTTP(설정 포트) / UDP 1234. 모두 메인 loop에서만 W6100 SPI</td></tr>
+  </tbody>
+</table>
+
+<h2 id="s6-2">6.2 인터페이스</h2>
+<figure class="drawing">
+  <img src="img/hw_01_board.png" alt="보드 인터페이스" class="plain">
+  <figcaption>그림 6-1. 보드 인터페이스 (원본 DXF: doc/BoardInterface.dxf, 실크 INVT_IPATH_DISP Rev2.0)</figcaption>
+</figure>
+<table class="t fit">
+  <thead><tr><th style="width:30mm">표기</th><th>용도</th></tr></thead>
+  <tbody>
+    <tr><td><strong>POWER 0 / +48</strong></td><td>전원. POWER1 또는 POWER2 중 하나만 사용합니다.</td></tr>
+    <tr><td><strong>TCP/IP</strong></td><td>이더넷 (SNMP · 웹 · IP Finder)</td></tr>
+    <tr><td><strong>RS485</strong></td><td>삼우 팩 통신. 점퍼 실크 1-2:485 / 2-3:232</td></tr>
+  </tbody>
+</table>
+<div class="warn">
+  <span class="lbl">배선 시 주의</span>
+  전원 극성을 확인하고 결선하십시오. 통신선은 전력선과 분리하고, RS-485 종단을 현장 규정에 맞게 맞추십시오.
+</div>
+</section>
+
+<!-- ============================================================ 부록 -->
+<section class="part">
+<h1 class="part-title" id="papx">부록</h1>
+
+<h2 id="apx-a">부록 A. 공장 출하 초기값</h2>
+<table class="t fit">
+  <thead><tr><th style="width:52mm">항목</th><th>초기값</th></tr></thead>
+  <tbody>
+    <tr><td>장치 이름</td><td><code>BAT RACK1</code></td></tr>
+    <tr><td>IP / Subnet / Gateway</td><td><code>192.168.0.57</code> / <code>255.255.255.0</code> / <code>192.168.0.1</code></td></tr>
+    <tr><td>DNS 1 / DNS 2</td><td><code>8.8.8.8</code> / <code>164.124.101.2</code></td></tr>
+    <tr><td>웹 서버 포트</td><td><code>81</code> (0이면 웹 끔)</td></tr>
+    <tr><td>웹 로그인 ID / PW</td><td><code>admin</code> / <code>admin</code></td></tr>
+    <tr><td>SNMP Community</td><td><code>public</code></td></tr>
+    <tr><td>RS-485 / 팩 주소</td><td>9600 8N1 / 1, 2</td></tr>
+    <tr><td>BLE 이름</td><td><code>IFTECH_SW_&lt;MAC&gt;</code></td></tr>
+    <tr><td>공장 OTA SSID</td><td><code>iftech</code> (현장에서는 앱으로 바꿉니다)</td></tr>
+  </tbody>
+</table>
+
+<h2 id="apx-b">부록 B. 문제 해결</h2>
+<table class="t">
+  <thead><tr><th style="width:52mm">증상</th><th>확인 및 조치</th></tr></thead>
+  <tbody>
+    <tr><td>화면은 켜지나 #1 #2가 --V</td>
+        <td>RS-485 배선, BMS 전원, 슬레이브 주소 1·2, 9600 8N1</td></tr>
+    <tr><td>한쪽만 통신끊김</td>
+        <td>해당 팩 주소·케이블. 다른 팩은 정상일 수 있습니다.</td></tr>
+    <tr><td>통신 램프가 전혀 안 깜빡임</td>
+        <td>RS-485 전체가 끊긴 상태입니다.</td></tr>
+    <tr><td>경고 램프 점등</td>
+        <td>해당 팩 Fault / Protect / Warning. 셀 DIFF·온도 확인</td></tr>
+    <tr><td>웹 접속이 되지 않는다</td>
+        <td>IP Finder [검색], WEB ENABLE, 포트(공장 81), ping</td></tr>
+    <tr><td>로그인 비밀번호를 잊었다</td>
+        <td>앱/CLI에서 확인할 수 없습니다. 웹 계정을 다시 쓰려면 설정 화면에서 ID/PW를 둘 다 넣어 저장하거나, 담당자에게 EEPROM/웹 계정 초기화를 요청하십시오.</td></tr>
+    <tr><td>NMS에서 SNMP가 안 된다</td>
+        <td>community <code>public</code>, UDP 161, OID 끝 <code>.0</code>, 웹 SNMP TEST로 모듈 자체 응답 확인</td></tr>
+    <tr><td>앱에 장비가 안 보인다</td>
+        <td>BLE 권한, 화면이 켜져 있는지, 이름이 <code>IFTECH_SW_</code> 인지</td></tr>
+    <tr><td>update 후 버전이 그대로</td>
+        <td>핫스팟/공유기 이름·암호(WPA2), 휴대폰 데이터, 서버 JSON의 latest가 장비보다 큰지</td></tr>
+    <tr><td>로그인은 되는데 모니터가 비어 있다</td>
+        <td><code>/fileUpload</code> 로 <code>UploadFiles/</code> 를 다시 올리십시오.</td></tr>
+    <tr><td>설정 저장 후 접속이 안 됨</td>
+        <td>새로 넣은 IP·포트로 접속. 잘못 넣었으면 Finder로 검색해 되돌립니다.</td></tr>
+  </tbody>
+</table>
+
+<div class="no-print">
+<h2 id="apx-c">부록 C. 인쇄 안내</h2>
+<div class="note">
+  <span class="lbl">이 문서를 PDF로 저장하는 방법</span>
+  <strong>권장:</strong> 이 폴더에서 <code>.\make_pdf.ps1</code> 을 실행합니다. Chrome/Edge 헤드리스로 변환합니다.<br><br>
+  수동 (Chrome):<br>
+  ① <span class="kbd">Ctrl</span> + <span class="kbd">P</span><br>
+  ② 대상 : <strong>PDF로 저장</strong> &nbsp;/&nbsp; 용지 : <strong>A4</strong> &nbsp;/&nbsp; 레이아웃 : <strong>세로</strong><br>
+  ③ 배율 : <strong>100 %</strong>, 여백 : <strong>기본값</strong><br>
+  ④ <strong>「배경 그래픽」을 반드시 체크</strong>하십시오.
+</div>
+</div>
+
+<p class="center small" style="margin-top:14mm; color:var(--muted);">
+— 문서 끝 —<br>
+본 설명서는 펌웨어 V1.0.25 기준으로 작성되었습니다.
+</p>
+
+</section>
+
+</div>
+</body>
+</html>

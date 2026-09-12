@@ -15,4 +15,9 @@ IPAddress ethW610LocalIP();
 IPAddress ethW610Subnet();
 IPAddress ethW610Gateway();
 
+void webHttpBegin();
+void webHttpLoop();
+bool webHttpIsUp();
+uint16_t webHttpListenPort();
+
 #endif

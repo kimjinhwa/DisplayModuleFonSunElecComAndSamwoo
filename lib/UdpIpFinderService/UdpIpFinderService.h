@@ -19,6 +19,7 @@ public:
     IPAddress ip;
     IPAddress subnet;
     IPAddress gateway;
+    bool webSpecified = false;
     bool webEnabled = true;
     uint16_t webPort = 80;
     bool trapEnabled = false;

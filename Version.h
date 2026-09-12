@@ -1,4 +1,8 @@
-#define VERSION "1.0.22"
+#define VERSION "1.0.25"
+/*
+* 사용자 메뉴얼을 추가한다.
+*/
+//efine VERSION "1.0.25"
 /*
 ipfinder 기능 추가.
 */

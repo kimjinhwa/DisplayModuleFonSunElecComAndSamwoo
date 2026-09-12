@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>리튬 BMS 웹 모니터</title>
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <div id="loginForm">
+    <h1>리튬 BMS 웹 모니터</h1>
+    <input name="userid" placeholder="User ID" />
+    <input name="passwd" placeholder="Password" type="password" />
+    <input type="button" class="btn" id="loginBtn" value="로그인" />
+    <div class="hint">기본 계정 admin / admin</div>
+  </div>
+  <script>
+    document.getElementById('loginBtn').onclick = async function () {
+      const userid = document.getElementsByName('userid')[0].value;
+      const passwd = document.getElementsByName('passwd')[0].value;
+      if (!userid || !passwd) { alert('아이디와 비밀번호를 입력하십시오.'); return; }
+      try {
+        const r = await fetch('/api/login', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userid: userid, passwd: passwd })
+        });
+        if (!r.ok) { alert('로그인에 실패했습니다.'); return; }
+        location.href = 'index.html';
+      } catch (e) { alert('연결 실패'); }
+    };
+    window.onload = async function () {
+      try {
+        const r = await fetch('/api/me', { credentials: 'include' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j.authenticated) location.href = 'index.html';
+        }
+      } catch (e) {}
+    };
+  </script>
+</body>
+</html>
