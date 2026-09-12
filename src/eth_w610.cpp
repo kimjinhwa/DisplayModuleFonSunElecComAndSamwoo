@@ -12,10 +12,31 @@
 #include <Ethernet_Generic.h>
 
 static EthernetUDP sSnmpUdp;
+static EthernetUDP sIpFinderUdp;
 
 UDP *ethW610SnmpUdp()
 {
   return &sSnmpUdp;
+}
+
+UDP *ethW610IpFinderUdp()
+{
+  return &sIpFinderUdp;
+}
+
+IPAddress ethW610LocalIP()
+{
+  return Ethernet.localIP();
+}
+
+IPAddress ethW610Subnet()
+{
+  return Ethernet.subnetMask();
+}
+
+IPAddress ethW610Gateway()
+{
+  return Ethernet.gatewayIP();
 }
 
 static void fillMac(uint8_t mac[6])
@@ -52,4 +73,29 @@ void ethW610PrintStatus()
   Serial.print(Ethernet.localIP());
   Serial.print(" link=");
   Serial.println(Ethernet.linkReport());
+}
+
+void ethW610CliStatus(Print &out)
+{
+  const auto chip = Ethernet.getChip();
+  out.printf("ETH CHIP : %s\r\n", chip == w6100 ? "W6100" : "none");
+  out.printf("ETH IP : %s\r\n", Ethernet.localIP().toString().c_str());
+  out.printf("ETH GW : %s\r\n", Ethernet.gatewayIP().toString().c_str());
+  out.printf("ETH SN : %s\r\n", Ethernet.subnetMask().toString().c_str());
+  out.printf("ETH MAC : %s\r\n", ethW610MacString().c_str());
+  out.printf("ETH LINK : %s\r\n", Ethernet.linkReport());
+}
+
+String ethW610MacString()
+{
+  uint8_t mac[6] = {};
+  Ethernet.MACAddress(mac);
+  if (mac[0] == 0 && mac[1] == 0 && mac[2] == 0 && mac[3] == 0 && mac[4] == 0 && mac[5] == 0)
+  {
+    fillMac(mac);
+  }
+  char buf[18];
+  snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return String(buf);
 }

@@ -7,6 +7,12 @@
 
 bool ethW610Begin(IPAddress ip, IPAddress gateway, IPAddress subnet, IPAddress dns);
 void ethW610PrintStatus();
+void ethW610CliStatus(Print &out);
 UDP *ethW610SnmpUdp();
+UDP *ethW610IpFinderUdp();
+String ethW610MacString();
+IPAddress ethW610LocalIP();
+IPAddress ethW610Subnet();
+IPAddress ethW610Gateway();
 
 #endif
