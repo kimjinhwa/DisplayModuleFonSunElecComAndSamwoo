@@ -75,9 +75,9 @@ static void cmdStatus(void)
       mySerialBT.printf("PACK%u : FAIL\r\n", (unsigned)(i + 1));
       continue;
     }
-    const uint16_t soc = samwooReg(i, 2);
-    const float volt = samwooReg(i, 4) / 10.0f;
-    const float amp = ((int16_t)samwooReg(i, 5)) / 10.0f;
+    const uint16_t soc = samwooReg(i, SAMWOO_REG_SOC);
+    const float volt = samwooReg(i, SAMWOO_REG_VOLT) / 10.0f;
+    const float amp = ((int16_t)samwooReg(i, SAMWOO_REG_CUR)) / 10.0f;
     mySerialBT.printf("PACK%u : OK SOC=%u V=%.1f I=%.1f\r\n",
                       (unsigned)(i + 1), (unsigned)soc, volt, amp);
   }

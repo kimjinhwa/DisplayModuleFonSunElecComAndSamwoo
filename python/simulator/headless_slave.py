@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Headless Modbus RTU slave for SNMPToModBus lab test (COM4, 9600).
+# Headless Modbus RTU slave for lab test (COM4, 19200).
 import sys
 import time
 import serial
@@ -8,7 +8,7 @@ import modbus_tk.defines as cst
 
 PORT = sys.argv[1] if len(sys.argv) > 1 else "COM4"
 SOC = int(sys.argv[2]) if len(sys.argv) > 2 else 85
-BAUD = 9600
+BAUD = 19200
 QTY = 48
 DEFAULTS = [0] * QTY
 DEFAULTS[0] = 10

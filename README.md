@@ -58,7 +58,7 @@ post_build.py          firmware.bin / esp32_samwoo.json → IIS + uploadFirmware
 ## 3. 동작 방식
 
 1. ESP32-S3가 RGB 패널을 직접 구동하고 LVGL로 그린다. 화면 백라이트는 항상 켜져 있다.
-2. Serial1 RS-485로 삼우 팩 주소 1·2를 폴링한다 (9600 8N1, 표준 Modbus가 아님).
+2. Serial1 RS-485로 삼우 팩 주소 1·2를 폴링한다 (19200 8N1, 표준 Modbus가 아님).
 3. 유선 랜이 있으면 W6100으로 SNMP(UDP 161), IPFinder(UDP 1234), 웹(EEPROM 포트)을 연다. HTML은 SPIFFS이며 `/fileUpload` 로 올린다. 주소는 대소문자를 가리지 않는다. 로그인 기본값 `admin` / `admin`.
 4. BLE로 `update`를 받으면 `isUpdate`만 저장하고 재부팅한다. **BLE와 Wi‑Fi를 동시에 켜지 않는다.**
 5. 재부팅 직후 Wi‑Fi로 `{FW_UPDATE_BASE}/{FW_UPDATE_META}` 를 보고, `latest`가 장치 `VERSION`보다 크면 펌웨어를 받아 플래시한다.

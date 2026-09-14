@@ -244,22 +244,22 @@ static bool serveByUri()
 static void addPackJson(JsonObject p, uint8_t i)
 {
   p["ok"] = samwooOk[i];
-  p["soc"] = (int)samwooReg(i, 2);
-  p["soh"] = (int)samwooReg(i, 3);
-  p["capacity"] = samwooReg(i, 1) / 10.0;
-  p["volt"] = samwooReg(i, 4) / 10.0;
-  p["amp"] = ((int16_t)samwooReg(i, 5)) / 10.0f;
-  uint8_t nCell = (uint8_t)samwooReg(i, 16);
-  if (nCell > 15)
+  p["soc"] = (int)samwooReg(i, SAMWOO_REG_SOC);
+  p["soh"] = (int)samwooReg(i, SAMWOO_REG_SOH);
+  p["capacity"] = samwooReg(i, SAMWOO_REG_CAP) / 10.0;
+  p["volt"] = samwooReg(i, SAMWOO_REG_VOLT) / 10.0;
+  p["amp"] = ((int16_t)samwooReg(i, SAMWOO_REG_CUR)) / 10.0f;
+  uint8_t nCell = (uint8_t)samwooReg(i, SAMWOO_REG_CELLNUM);
+  if (nCell > SAMWOO_REG_CELLS)
   {
-    nCell = 15;
+    nCell = SAMWOO_REG_CELLS;
   }
   p["cellNum"] = nCell;
   uint16_t h = 0, l = 0xFFFF;
   JsonArray cells = p.createNestedArray("cells");
-  for (uint8_t c = 0; c < 15; ++c)
+  for (uint8_t c = 0; c < SAMWOO_REG_CELLS; ++c)
   {
-    const uint16_t mv = samwooReg(i, (uint16_t)(17 + c));
+    const uint16_t mv = samwooReg(i, (uint16_t)(SAMWOO_REG_CELL0 + c));
     cells.add(mv);
     if (c < nCell && mv > 0)
     {
@@ -281,7 +281,7 @@ static void addPackJson(JsonObject p, uint8_t i)
   uint8_t tcnt = 0;
   for (uint8_t t = 0; t < 8; ++t)
   {
-    const float tc = ((int16_t)samwooReg(i, (uint16_t)(32 + t))) / 10.0f;
+    const float tc = ((int16_t)samwooReg(i, (uint16_t)(SAMWOO_REG_TEMP0 + t))) / 10.0f;
     temps.add(tc);
     if (t < 4)
     {
@@ -290,12 +290,12 @@ static void addPackJson(JsonObject p, uint8_t i)
     }
   }
   p["temp"] = tcnt ? (tsum / tcnt) : 0;
-  const uint16_t relay = samwooReg(i, 12);
+  const uint16_t relay = samwooReg(i, SAMWOO_REG_RELAY);
   p["charge"] = (relay & 0x0001) != 0;
   p["discharge"] = (relay & 0x0002) != 0;
-  p["fault"] = (int)samwooReg(i, 13);
-  p["protect"] = (int)samwooReg(i, 14);
-  p["warning"] = (int)samwooReg(i, 15);
+  p["fault"] = (int)samwooReg(i, SAMWOO_REG_FAULT);
+  p["protect"] = (int)samwooReg(i, SAMWOO_REG_PROTECT);
+  p["warning"] = (int)samwooReg(i, SAMWOO_REG_WARNING);
   p["warn"] = statusLedsHasAlarm(i);
   const char *cause = statusLedsAlarmCause(i);
   if (!samwooOk[i])
@@ -349,46 +349,46 @@ static int oidInt(const String &oid, bool *found)
   for (uint8_t p = 0; p < 2; ++p)
   {
     if (packOid(p, ".3.0"))
-      return samwooReg(p, 2);
+      return samwooReg(p, SAMWOO_REG_SOC);
     if (packOid(p, ".8.0"))
-      return (int16_t)samwooReg(p, 4);
+      return (int16_t)samwooReg(p, SAMWOO_REG_VOLT);
     if (packOid(p, ".2.0"))
-      return (int16_t)samwooReg(p, 5);
+      return (int16_t)samwooReg(p, SAMWOO_REG_CUR);
     if (packOid(p, ".4.0"))
-      return samwooReg(p, 1);
+      return samwooReg(p, SAMWOO_REG_CAP);
     if (packOid(p, ".9.0"))
-      return samwooReg(p, 3);
+      return samwooReg(p, SAMWOO_REG_SOH);
     if (packOid(p, ".7.0"))
-      return samwooReg(p, 0);
+      return samwooReg(p, SAMWOO_REG_VER);
     if (packOid(p, ".11.0"))
-      return samwooReg(p, 6);
+      return samwooReg(p, SAMWOO_REG_VMAX);
     if (packOid(p, ".12.0"))
-      return samwooReg(p, 7);
+      return samwooReg(p, SAMWOO_REG_VMIN);
     if (packOid(p, ".15.0"))
-      return samwooReg(p, 16);
+      return samwooReg(p, SAMWOO_REG_CELLNUM);
     if (packOid(p, ".6.1.0"))
-      return samwooReg(p, 13);
+      return samwooReg(p, SAMWOO_REG_FAULT);
     if (packOid(p, ".10.0"))
-      return samwooReg(p, 14);
+      return samwooReg(p, SAMWOO_REG_PROTECT);
     if (packOid(p, ".6.2.0"))
-      return samwooReg(p, 15);
+      return samwooReg(p, SAMWOO_REG_WARNING);
     if (packOid(p, ".6.4.0"))
-      return (samwooReg(p, 12) & 1) ? 1 : 0;
+      return (samwooReg(p, SAMWOO_REG_RELAY) & 1) ? 1 : 0;
     if (packOid(p, ".6.5.0"))
-      return (samwooReg(p, 12) & 2) ? 1 : 0;
-    for (uint8_t c = 1; c <= 16; ++c)
+      return (samwooReg(p, SAMWOO_REG_RELAY) & 2) ? 1 : 0;
+    for (uint8_t c = 1; c <= SAMWOO_REG_CELLS; ++c)
     {
       char sfx[16];
       snprintf(sfx, sizeof(sfx), ".1.%u.0", (unsigned)c);
       if (packOid(p, sfx))
-        return samwooReg(p, (uint16_t)(16 + c));
+        return samwooReg(p, (uint16_t)(SAMWOO_REG_CELL0 + c - 1));
     }
-    for (uint8_t t = 1; t <= 8; ++t)
+    for (uint8_t t = 1; t <= SAMWOO_REG_TEMPS; ++t)
     {
       char sfx[16];
       snprintf(sfx, sizeof(sfx), ".5.%u.0", (unsigned)t);
       if (packOid(p, sfx))
-        return (int16_t)samwooReg(p, (uint16_t)(31 + t));
+        return (int16_t)samwooReg(p, (uint16_t)(SAMWOO_REG_TEMP0 + t - 1));
     }
   }
   if (o == ".1.3.6.1.2.1.1.7.0")

@@ -1,24 +1,27 @@
-# BMS Modbus 시뮬레이터
+# 삼우 BMS 시뮬레이터
 
-표준 Modbus RTU와 삼우(STX `0x3A` + binary + LRC + CR LF)를 고를 수 있습니다.
-한 포트에 **Slave 1(왼쪽 팩)** 과 **Slave 2(오른쪽 팩)** 을 동시에 올립니다.
+실팩이 없을 때 디스플레이를 붙이는 **슬레이브**입니다.  
+실팩을 PC에 연결해 읽을 때는 시뮬레이터가 아니라 `python/samwoo_lab.py` 를 씁니다.
 
-```bash
+프레이밍: STX `0x3A` + 이진 PDU + LRC + CR LF (`doc/삼우에스비_통신_Protocol_20260816.xls`).
+
+```powershell
 pip install -r requirements.txt
 python rtuslave_samwoo.py
 ```
 
-GUI exe (콘솔 창 없음):
+exe:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\makeExe.ps1
 ```
 
-산출물은 `dist\rtuslave_samwoo.exe` 입니다.
+산출: `dist\rtuslave_samwoo.exe`
 
-- Port / Baud(기본 COM4, 9600 8N1) → 모드 선택 → **Open**
-- **Debug** 체크 시 ModPoll처럼 Rx/Tx 헥사 팝업
-- 레지스터 값을 바꾼 뒤 **Set**
-- FC03(Holding) / FC04(Input) 모두 같은 맵(주소 0~47)
+- 기본 모드 **삼우 STX+LRC**, 19200 8N1 (업체 확인), slave 1 / 2
+- **응답 length**: 레지스터수 `0x30`(실팩). 구 펌웨어용 바이트수 `0x60` 은 옵션.
+- 요청 start는 **1만** 사용. 맵은 통신_RX (Relay@10, 셀@15).
+- Debug 체크 시 Rx/Tx 헥스
+- 표준 Modbus RTU 는 비교용으로만 둔다.
 
-삼우 LRC는 본문 합의 2의 보수(`(~sum)+1`)입니다. 펌웨어 `oid_map.json` 의 `modbus.framing: samwoo` 와 같습니다.
+LRC는 `samwoo_proto.py` 와 같다. 엑셀·펌웨어와 어긋난 부분은 랩 리포트를 보고 고친다.

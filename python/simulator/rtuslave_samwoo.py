@@ -1,10 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""BMS Modbus slave simulator — 표준 RTU / 삼우(STX+LRC), Pack1+Pack2."""
+"""삼우 BMS 슬레이브 시뮬레이터 — 팩1/팩2.
+
+실팩이 없을 때 디스플레이를 붙인다. 실팩 결과는 python/samwoo_lab.py 로 확인한 뒤
+아래 옵션을 맞춘다.
+
+  삼우: STX 0x3A + 이진 + LRC + CR LF  (xls 2026-08-16)
+  응답 length: bytes=0x60(지금 펌웨어) / regs=0x30(문서 예제)
+  start=1을 첫 레지스터로: 문서 TX 00 01
+"""
+import os
 import queue
+import sys
 import threading
 import time
 from datetime import datetime
+
+_PY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PY not in sys.path:
+    sys.path.insert(0, _PY)
+
+from samwoo_proto import (  # noqa: E402
+    QTY,
+    RS485_BAUD,
+    SLAVE_LEFT,
+    SLAVE_RIGHT,
+    build_response,
+    lrc8,
+    make_defaults,
+    register_name,
+)
 
 import serial
 from serial.tools import list_ports
@@ -16,55 +41,9 @@ import modbus_tk.defines as cst
 from modbus_tk import modbus_rtu
 
 PORT_DEFAULT = "COM4"
-BAUD_DEFAULT = 9600
-QTY = 48
-SLAVE_LEFT = 1
-SLAVE_RIGHT = 2
-
+BAUD_DEFAULT = RS485_BAUD
 MODE_RTU = "rtu"
 MODE_SAMWOO = "samwoo"
-
-LABELS = {
-    0: "BMS Ver", 1: "Capacity x0.1", 2: "SOC %", 3: "SOH %",
-    4: "PackV x0.1", 5: "Current x0.1", 6: "CellVmax mV", 7: "CellVmin mV",
-    8: "Tmax x0.1", 9: "Tmin x0.1", 12: "Relay", 13: "Fault",
-    14: "Protect", 15: "Warning", 16: "CellNum",
-}
-
-
-def register_name(addr):
-    if 17 <= addr <= 31:
-        return "CellV[%d]" % (addr - 16)
-    if 32 <= addr <= 39:
-        return "Temp[%d]" % (addr - 31)
-    return LABELS.get(addr, "R%d" % addr)
-
-
-def make_defaults(pack_index):
-    """pack_index 0=왼쪽(1번), 1=오른쪽(2번). 값이 달라야 구분이 됩니다."""
-    d = [0] * QTY
-    d[0] = 10 + pack_index
-    d[1] = 1000
-    d[2] = 85 if pack_index == 0 else 70
-    d[3] = 98 if pack_index == 0 else 95
-    d[4] = 540 if pack_index == 0 else 528
-    d[5] = 25 if pack_index == 0 else 18
-    d[6] = 3400 if pack_index == 0 else 3380
-    d[7] = 3300 if pack_index == 0 else 3280
-    d[8] = 250 if pack_index == 0 else 245
-    d[9] = 240 if pack_index == 0 else 235
-    d[12] = 0x07
-    d[16] = 16
-    for i in range(16):
-        d[17 + i] = (3350 if pack_index == 0 else 3320) + i
-    d[31] = 8
-    for i in range(8):
-        d[32 + i] = 250 if pack_index == 0 else 245
-    return d
-
-
-def lrc8(data):
-    return ((~sum(data) & 0xFF) + 1) & 0xFF
 
 
 def list_comports():
@@ -218,11 +197,13 @@ class PackStore:
 class SamwooSlaveThread(threading.Thread):
     """STX(0x3A) + binary PDU + LRC + CR LF. FC03/FC04."""
 
-    def __init__(self, ser, packs_by_id, logger=None):
+    def __init__(self, ser, packs_by_id, logger=None, start1_is_first=True, length_mode="bytes"):
         super().__init__(daemon=True)
         self.ser = ser
         self.packs_by_id = packs_by_id
         self.logger = logger
+        self.start1_is_first = start1_is_first
+        self.length_mode = length_mode
         self.stop_event = threading.Event()
         self.last_status = ""
         self.rx_ok = 0
@@ -296,14 +277,11 @@ class SamwooSlaveThread(threading.Thread):
             self.rx_bad += 1
             self._log("ERR", frame, "bad FC/qty")
             return
-        values = pack.get_range(start, qty)
-        data = bytearray()
-        for v in values:
-            data.append((v >> 8) & 0xFF)
-            data.append(v & 0xFF)
-        resp_body = bytes([slave, fc, len(data)]) + bytes(data)
-        out = bytes([0x3A]) + resp_body + bytes([lrc8(resp_body), 0x0D, 0x0A])
-        note = "slave %d FC%02d start=%d qty=%d" % (slave, fc, start, qty)
+        idx = start - 1 if (self.start1_is_first and start >= 1) else start
+        values = pack.get_range(idx, qty)
+        out = build_response(slave, fc, values, length_mode=self.length_mode)
+        note = "slave %d FC%02d start=%d idx=%d qty=%d len=%s" % (
+            slave, fc, start, idx, qty, self.length_mode)
         self._log("RX", frame, note)
         try:
             self.ser.write(out)
@@ -342,7 +320,7 @@ class PackPanel(ttk.LabelFrame):
         for addr in range(QTY):
             row = ttk.Frame(inner)
             row.pack(fill="x", padx=2, pady=1)
-            ttk.Label(row, text="%02d %s" % (addr, register_name(addr)), width=18).pack(side="left")
+            ttk.Label(row, text="%02d %s" % (addr, register_name(addr, "rx")), width=20).pack(side="left")
             ent = ttk.Entry(row, width=7)
             ent.insert(0, str(defaults[addr]))
             ent.pack(side="left")
@@ -359,7 +337,7 @@ class PackPanel(ttk.LabelFrame):
             except ValueError:
                 return
             # 셀전압(mV) 칸에 3.550 처럼 볼트를 넣으면 mV로 변환
-            if (addr in (6, 7) or 17 <= addr <= 31) and 1.0 <= abs(f) < 10.0:
+            if (addr in (6, 7) or 15 <= addr <= 30) and 1.0 <= abs(f) < 10.0:
                 f *= 1000.0
             val = int(round(f))
         val &= 0xFFFF
@@ -377,8 +355,8 @@ class PackPanel(ttk.LabelFrame):
 class SimulatorApp:
     def __init__(self, root):
         self.root = root
-        root.title("BMS Modbus Simulator — Pack1 / Pack2")
-        root.geometry("1080x720")
+        root.title("삼우 BMS 시뮬레이터 — Pack1 / Pack2")
+        root.geometry("1180x760")
 
         self.server = None
         self.samwoo = None
@@ -395,17 +373,24 @@ class SimulatorApp:
         self.port_cb.pack(side="left", padx=4)
         ttk.Label(top, text="Baud").pack(side="left")
         self.baud_var = tk.StringVar(value=str(BAUD_DEFAULT))
-        ttk.Entry(top, textvariable=self.baud_var, width=8).pack(side="left", padx=4)
+        ttk.Combobox(top, textvariable=self.baud_var, values=("19200", "9600", "38400"), width=8).pack(side="left", padx=4)
 
         ttk.Label(top, text="모드").pack(side="left", padx=(12, 4))
-        self.mode_var = tk.StringVar(value=MODE_RTU)
-        ttk.Radiobutton(top, text="표준 Modbus RTU", variable=self.mode_var, value=MODE_RTU).pack(side="left")
-        ttk.Radiobutton(top, text="삼우 (STX 0x3A + LRC + CR LF)", variable=self.mode_var, value=MODE_SAMWOO).pack(side="left")
+        self.mode_var = tk.StringVar(value=MODE_SAMWOO)
+        ttk.Radiobutton(top, text="삼우 STX+LRC", variable=self.mode_var, value=MODE_SAMWOO).pack(side="left")
+        ttk.Radiobutton(top, text="표준 RTU", variable=self.mode_var, value=MODE_RTU).pack(side="left")
 
         ttk.Button(top, text="Open", command=self.open_port).pack(side="left", padx=(12, 4))
         ttk.Button(top, text="Close", command=self.close_port).pack(side="left")
         self.debug_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(top, text="Debug", variable=self.debug_var, command=self._toggle_debug).pack(side="left", padx=(16, 0))
+
+        opt = ttk.Frame(root, padding=(8, 0))
+        opt.pack(fill="x")
+        self.length_var = tk.StringVar(value="regs")
+        ttk.Label(opt, text="응답 length").pack(side="left")
+        ttk.Radiobutton(opt, text="레지스터수 0x30 (실팩)", variable=self.length_var, value="regs").pack(side="left")
+        ttk.Radiobutton(opt, text="바이트수 0x60 (구 펌웨어)", variable=self.length_var, value="bytes").pack(side="left")
 
         self.status = tk.StringVar(value="대기 — 포트를 여세요")
         ttk.Label(root, textvariable=self.status, padding=(8, 0)).pack(fill="x")
@@ -476,7 +461,10 @@ class SimulatorApp:
             else:
                 self.status.set("열기 실패: %s" % e)
             return
-        label = "표준 Modbus RTU" if mode == MODE_RTU else "삼우 STX+LRC"
+        if mode == MODE_RTU:
+            label = "표준 Modbus RTU"
+        else:
+            label = "삼우 STX+LRC length=%s start=1" % self.length_var.get()
         self.status.set("%s  |  %s %d 8N1  |  slave %d / %d" % (label, port, baud, SLAVE_LEFT, SLAVE_RIGHT))
         if not silent:
             messagebox.showinfo("OK", "%s\n%s %d 8N1\nPack1 slave=%d, Pack2 slave=%d" % (
@@ -505,7 +493,13 @@ class SimulatorApp:
 
     def _open_samwoo(self, port, baud):
         self.serial_samwoo = serial.Serial(port, baud, timeout=0.05)
-        self.samwoo = SamwooSlaveThread(self.serial_samwoo, self.packs, self.logger)
+        self.samwoo = SamwooSlaveThread(
+            self.serial_samwoo,
+            self.packs,
+            self.logger,
+            start1_is_first=True,
+            length_mode=self.length_var.get(),
+        )
         self.samwoo.start()
 
     def close_port(self, silent=False):

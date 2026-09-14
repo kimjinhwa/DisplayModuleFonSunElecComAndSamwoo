@@ -10,7 +10,7 @@ function led(on, cls) {
 
 function packCard(i, p) {
   const fail = p.ok ? '' : ' fail';
-  const rawCells = (p.cells || []).slice(0, p.cellNum || 15);
+  const rawCells = (p.cells || []).slice(0, p.cellNum || 16);
   const valid = rawCells.filter(function (mv) { return mv >= 100; });
   const h = valid.length ? Math.max.apply(null, valid) : 0;
   const l = valid.length ? Math.min.apply(null, valid) : 0;

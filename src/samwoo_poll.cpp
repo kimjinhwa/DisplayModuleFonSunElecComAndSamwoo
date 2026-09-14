@@ -26,8 +26,14 @@ static bool parseRegisters(const uint8_t *pdu, size_t pduLen, uint8_t pack, uint
   {
     return false;
   }
-  const uint8_t byteCount = pdu[2];
-  if (byteCount < expectedQty * 2 || (size_t)(3 + byteCount) > pduLen)
+  const uint8_t length = pdu[2];
+  const size_t need = (size_t)expectedQty * 2;
+  // 실팩: length=레지스터수(0x30). 표준 Modbus면 바이트수(0x60).
+  if (length != expectedQty && length != need)
+  {
+    return false;
+  }
+  if (pduLen < 3 + need)
   {
     return false;
   }
@@ -60,8 +66,8 @@ static void sendRequest(uint8_t slave)
   uint8_t body[6];
   body[0] = slave;
   body[1] = 0x04;
-  body[2] = 0;
-  body[3] = 0;
+  body[2] = (uint8_t)(SAMWOO_REQ_START >> 8);
+  body[3] = (uint8_t)(SAMWOO_REQ_START & 0xFF);
   body[4] = (uint8_t)(SAMWOO_REG_MAX >> 8);
   body[5] = (uint8_t)(SAMWOO_REG_MAX & 0xFF);
   const uint8_t lrc = lrc8(body, sizeof(body));
@@ -135,8 +141,10 @@ static void logStatus()
     return;
   }
   Serial.printf("[SAMWOO] p1 %s SOC=%u V=%u C1=%u  p2 %s SOC=%u V=%u C1=%u err=%lu\n",
-                samwooOk[0] ? "OK" : "FAIL", samwooReg(0, 2), samwooReg(0, 4), samwooReg(0, 17),
-                samwooOk[1] ? "OK" : "FAIL", samwooReg(1, 2), samwooReg(1, 4), samwooReg(1, 17),
+                samwooOk[0] ? "OK" : "FAIL", samwooReg(0, SAMWOO_REG_SOC), samwooReg(0, SAMWOO_REG_VOLT),
+                samwooReg(0, SAMWOO_REG_CELL0),
+                samwooOk[1] ? "OK" : "FAIL", samwooReg(1, SAMWOO_REG_SOC), samwooReg(1, SAMWOO_REG_VOLT),
+                samwooReg(1, SAMWOO_REG_CELL0),
                 (unsigned long)samwooErrorCount);
 }
 
@@ -230,25 +238,26 @@ void samwooFillNarada()
       continue;
     }
     const uint16_t *r = samwooRegs[pack];
-    b->Capacity = (int)r[1];
-    b->soc = (int)r[2] * 100;
-    b->SOH = (int)r[3] * 100;
-    b->totalVoltage = (int)r[4] * 10;
-    b->ampere = 30000 + (int16_t)r[5] * 10;
-    b->voltageNumber = r[16] > 15 ? 15 : (int)r[16];
-    if (b->voltageNumber < 1)
+    b->Capacity = (int)r[SAMWOO_REG_CAP];
+    b->soc = (int)r[SAMWOO_REG_SOC] * 100;
+    b->SOH = (int)r[SAMWOO_REG_SOH] * 100;
+    b->totalVoltage = (int)r[SAMWOO_REG_VOLT] * 10;
+    b->ampere = 30000 + (int16_t)r[SAMWOO_REG_CUR] * 10;
+    int nCell = (int)r[SAMWOO_REG_CELLNUM];
+    if (nCell < 1 || nCell > 16)
     {
-      b->voltageNumber = 15;
+      nCell = 16;
     }
-    for (int i = 0; i < 15; ++i)
+    b->voltageNumber = nCell;
+    for (int i = 0; i < 16; ++i)
     {
-      b->voltage[i] = (int)r[17 + i];
+      b->voltage[i] = (int)r[SAMWOO_REG_CELL0 + i];
     }
     b->TempreatureNumber = 4;
     for (int i = 0; i < 4; ++i)
     {
-      b->Tempreature[i] = 50 + ((int16_t)r[32 + i] / 10);
+      b->Tempreature[i] = 50 + ((int16_t)r[SAMWOO_REG_TEMP0 + i] / 10);
     }
-    b->BMS_PROTECT_STATUS = (int)r[14];
+    b->BMS_PROTECT_STATUS = (int)r[SAMWOO_REG_PROTECT];
   }
 }

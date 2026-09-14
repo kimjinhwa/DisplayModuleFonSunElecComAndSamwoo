@@ -10,7 +10,7 @@
 #define PIN_RS485_TX 17
 #define PIN_RS485_RX 18
 #ifndef RS485_UART_BAUD
-#define RS485_UART_BAUD 9600
+#define RS485_UART_BAUD 19200
 #endif
 
 // WIZ610 / W6100 SPI. RST·INT GPIO 없음 (모듈 H/W 리셋만)

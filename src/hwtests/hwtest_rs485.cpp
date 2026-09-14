@@ -1,10 +1,10 @@
 // THVD1406DR RS485 H/W 테스트.
 //   pio run -e hwtest_rs485 -t upload
 // USB Serial (PuTTY COM3, 115200): 로그. 입력은 485로 전달.
-// Serial1 9600 8N1 TX=17 RX=18:
+// Serial1 19200 8N1 TX=17 RX=18:
 //   5초마다 "RS485 tick N" 송신
 //   485로 수신되면 "ACK: ..." 응답 + USB에 출력
-// USB-RS485 어댑터는 9600 8N1로 같은 버스에 붙이면 된다.
+// USB-RS485 어댑터는 19200 8N1로 같은 버스에 붙이면 된다.
 
 #include <Arduino.h>
 #include "board_pins.h"

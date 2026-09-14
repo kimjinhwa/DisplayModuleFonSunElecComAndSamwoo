@@ -180,7 +180,7 @@ pre.code { display: block; padding: 2.6mm 3.4mm; background: #f2f4f7; border: 1p
   <tbody>
     <tr><td>배터리</td><td>삼우 리튬 팩 2대 (주소 1 · 2)</td></tr>
     <tr><td>화면</td><td>7인치 컬러 터치. 백라이트는 항상 켜져 있습니다.</td></tr>
-    <tr><td>통신 (배터리)</td><td>RS-485, 9600 8N1 (표준 Modbus가 아닙니다)</td></tr>
+    <tr><td>통신 (배터리)</td><td>RS-485, 19200 8N1 (표준 Modbus가 아닙니다)</td></tr>
     <tr><td>통신 (상위)</td><td>이더넷 — SNMPv2c UDP 161, 웹(공장 포트 81), IP Finder UDP 1234</td></tr>
     <tr><td>공장 IP</td><td><code>192.168.0.57</code> / <code>255.255.255.0</code> / 게이트웨이 <code>192.168.0.1</code></td></tr>
     <tr><td>BLE 이름</td><td><code>IFTECH_SW_</code> + MAC</td></tr>
@@ -698,7 +698,7 @@ snmpwalk -v2c -c public 192.168.0.57 .1.3.6.1.2.1.32.1</pre>
     <tr><td>보드</td><td>Sunton ESP32-8048S070 (ESP32-S3, 7인치 RGB 터치)</td></tr>
     <tr><td>전원</td><td>보드 실크 <strong>0 / +48</strong> (POWER1 또는 POWER2 중 하나)</td></tr>
     <tr><td>이더넷</td><td>WIZ610 / W6100 SPI, RJ45 (TCP/IP)</td></tr>
-    <tr><td>배터리 통신</td><td>RS-485, 9600 8N1</td></tr>
+    <tr><td>배터리 통신</td><td>RS-485, 19200 8N1</td></tr>
     <tr><td>터치</td><td>GT911 (I2C). RTC(DS1307)와 버스 공유</td></tr>
     <tr><td>SNMP / 웹 / Finder</td><td>UDP 161 / HTTP(설정 포트) / UDP 1234. 모두 메인 loop에서만 W6100 SPI</td></tr>
   </tbody>
@@ -737,7 +737,7 @@ snmpwalk -v2c -c public 192.168.0.57 .1.3.6.1.2.1.32.1</pre>
     <tr><td>웹 서버 포트</td><td><code>81</code> (0이면 웹 끔)</td></tr>
     <tr><td>웹 로그인 ID / PW</td><td><code>admin</code> / <code>admin</code></td></tr>
     <tr><td>SNMP Community</td><td><code>public</code></td></tr>
-    <tr><td>RS-485 / 팩 주소</td><td>9600 8N1 / 1, 2</td></tr>
+    <tr><td>RS-485 / 팩 주소</td><td>19200 8N1 / 1, 2</td></tr>
     <tr><td>BLE 이름</td><td><code>IFTECH_SW_&lt;MAC&gt;</code></td></tr>
     <tr><td>공장 OTA SSID</td><td><code>iftech</code> (현장에서는 앱으로 바꿉니다)</td></tr>
   </tbody>
@@ -748,7 +748,7 @@ snmpwalk -v2c -c public 192.168.0.57 .1.3.6.1.2.1.32.1</pre>
   <thead><tr><th style="width:52mm">증상</th><th>확인 및 조치</th></tr></thead>
   <tbody>
     <tr><td>화면은 켜지나 #1 #2가 --V</td>
-        <td>RS-485 배선, BMS 전원, 슬레이브 주소 1·2, 9600 8N1</td></tr>
+        <td>RS-485 배선, BMS 전원, 슬레이브 주소 1·2, 19200 8N1</td></tr>
     <tr><td>한쪽만 통신끊김</td>
         <td>해당 팩 주소·케이블. 다른 팩은 정상일 수 있습니다.</td></tr>
     <tr><td>통신 램프가 전혀 안 깜빡임</td>

@@ -1,0 +1,49 @@
+idx  hex    u16   s16    통신맵/펌        통신_RX
+  0  0000      0     0  BMS Ver          BMS Ver
+  1  0003      3     3  Capacity x0.1Ah  Capacity x0.1Ah
+  2  03E8   1000  1000  SOC %            SOC %
+  3  0064    100   100  SOH %            SOH %
+  4  0063     99    99  PackV x0.1       PackV x0.1
+  5  021C    540   540  Current x0.1     Current x0.1
+  6  0000      0     0  CellVmax mV      CellVmax mV
+  7  0D41   3393  3393  CellVmin mV      CellVmin mV
+  8  0D23   3363  3363  Tmax x0.1C       Tmax x0.1C
+  9  010F    271   271  Tmin x0.1C       Tmin x0.1C
+ 10  0106    262   262  (맵 공백10)         Relay
+ 11  0007      7     7  (맵 공백11)         Fault
+ 12  0000      0     0  Relay            Protect
+ 13  0000      0     0  Fault            Warning
+ 14  0000      0     0  Protect          CellNum
+ 15  0010     16    16  Warning          CellV[0]
+ 16  0D36   3382  3382  CellNum          CellV[1]
+ 17  0D41   3393  3393  CellV[0]         CellV[2]
+ 18  0D23   3363  3363  CellV[1]         CellV[3]
+ 19  0D39   3385  3385  CellV[2]         CellV[4]
+ 20  0D39   3385  3385  CellV[3]         CellV[5]
+ 21  0D29   3369  3369  CellV[4]         CellV[6]
+ 22  0D33   3379  3379  CellV[5]         CellV[7]
+ 23  0D3B   3387  3387  CellV[6]         CellV[8]
+ 24  0D39   3385  3385  CellV[7]         CellV[9]
+ 25  0D41   3393  3393  CellV[8]         CellV[10]
+ 26  0D2F   3375  3375  CellV[9]         CellV[11]
+ 27  0D2C   3372  3372  CellV[10]        CellV[12]
+ 28  0D2A   3370  3370  CellV[11]        CellV[13]
+ 29  0D27   3367  3367  CellV[12]        CellV[14]
+ 30  0D2D   3373  3373  CellV[13]        CellV[15]
+ 31  0D38   3384  3384  TempNum          TempNum
+ 32  0008      8     8  Temp[0]          Temp[0]
+ 33  0106    262   262  Temp[1]          Temp[1]
+ 34  010B    267   267  Temp[2]          Temp[2]
+ 35  010F    271   271  Temp[3]          Temp[3]
+ 36  010B    267   267  Temp[4]          Temp[4]
+ 37  0108    264   264  Temp[5]          Temp[5]
+ 38  0107    263   263  Temp[6]          Temp[6]
+ 39  0106    262   262  Temp[7]          Temp[7]
+ 40  010A    266   266  예비0              예비0
+ 41  0000      0     0  예비1              예비1
+ 42  0000      0     0  예비2              예비2
+ 43  0000      0     0  예비3              예비3
+ 44  0000      0     0  예비4              예비4
+ 45  0000      0     0  예비5              예비5
+ 46  0000      0     0  예비6              예비6
+ 47  0000      0     0  예비7              예비7

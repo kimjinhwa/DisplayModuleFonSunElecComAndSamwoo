@@ -63,9 +63,9 @@ void NaradaClient232::makeInt(uint16_t *dest,const uint8_t *src,byte len){
 void NaradaClient232::initBatInfo()
 {
     for(int packNumber=0;packNumber<8;packNumber++)
-        for(int j=0;j<15;j++)batInfo[packNumber].voltage[j]=0;
+        for(int j=0;j<16;j++)batInfo[packNumber].voltage[j]=0;
     for(int packNumber=0;packNumber<8;packNumber++)
-        batInfo[packNumber].voltageNumber =15;
+        batInfo[packNumber].voltageNumber =16;
     for(int packNumber=0;packNumber<8;packNumber++)
         batInfo[packNumber].ampere=0;   // ofset 30000, (30000 - (data0*256 + data1) )/100
     for(int packNumber=0;packNumber<8;packNumber++)
@@ -89,8 +89,8 @@ void NaradaClient232::initBatInfo()
 }
 void NaradaClient232::initBatInfo(int packNumber)
 {
-    for(int j=0;j<15;j++)batInfo[packNumber].voltage[j]=0;
-    batInfo[packNumber].voltageNumber =15;
+    for(int j=0;j<16;j++)batInfo[packNumber].voltage[j]=0;
+    batInfo[packNumber].voltageNumber =16;
     batInfo[packNumber].ampere=30000;   // ofset 30000, (30000 - (data0*256 + data1) )/100
     batInfo[packNumber].soc=0;    // 0.01
     batInfo[packNumber].Capacity=0;    //0.01
@@ -106,7 +106,7 @@ void NaradaClient232::initBatInfo(int packNumber)
 void NaradaClient232::copyBatInfoData(int packNumber, batteryInofo_t* dest){
     xSemaphoreTake(revDataMutex, portMAX_DELAY);
     dest->voltageNumber = batInfo[packNumber].voltageNumber ;
-    for(int j=0;j<15;j++)dest->voltage[j]= batInfo[packNumber].voltage[j];
+    for(int j=0;j<16;j++)dest->voltage[j]= batInfo[packNumber].voltage[j];
     dest->ampere =  batInfo[packNumber].ampere;
     dest->soc =  batInfo[packNumber].soc;
     dest->Capacity = batInfo[packNumber].Capacity;
@@ -206,7 +206,7 @@ void NaradaClient232::makeDataClear(int packNumber)
 {
     if (xSemaphoreTake(revDataMutex, portMAX_DELAY)) {
         batInfo[packNumber].voltageNumber = 0;
-        for (int j = 0; j < 15; j++)
+        for (int j = 0; j < 16; j++)
             batInfo[packNumber].voltage[j] = 0;
         batInfo[packNumber].ampere = 0;
         batInfo[packNumber].soc = 0;

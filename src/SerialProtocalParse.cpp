@@ -143,10 +143,11 @@ lv_obj_t* ui_packVoltage[8] = {
   ui_lblPack1, ui_lblPack2, ui_lblPack3, ui_lblPack4,
   ui_lblPack5, ui_lblPack6, ui_lblPack7, ui_lblPack8,
 };
-lv_obj_t* ui_cellVoltage[15] = {
-  ui_lblvoltage1, ui_lblvoltage2, ui_lblvoltage3, ui_lblvoltage4, ui_lblvoltage5, 
-  ui_lblvoltage6, ui_lblvoltage7, ui_lblvoltage8, ui_lblvoltage9, ui_lblvoltage10, 
-  ui_lblvoltage11, ui_lblvoltage12, ui_lblvoltage13, ui_lblvoltage14, ui_lblvoltage15, 
+lv_obj_t* ui_cellVoltage[16] = {
+  ui_lblvoltage1, ui_lblvoltage2, ui_lblvoltage3, ui_lblvoltage4, ui_lblvoltage5,
+  ui_lblvoltage6, ui_lblvoltage7, ui_lblvoltage8, ui_lblvoltage9, ui_lblvoltage10,
+  ui_lblvoltage11, ui_lblvoltage12, ui_lblvoltage13, ui_lblvoltage14, ui_lblvoltage15,
+  ui_lblvoltage16,
 };
 
 float avgVoltage =0.0;
@@ -169,6 +170,7 @@ void initUI_Ptr(){
     ui_cellVoltage[12] = ui_lblvoltage13;
     ui_cellVoltage[13] = ui_lblvoltage14;
     ui_cellVoltage[14] = ui_lblvoltage15;
+    ui_cellVoltage[15] = ui_lblvoltage16;
 
    ui_packVoltage[0]=ui_lblPack1;
    ui_packVoltage[1]=ui_lblPack2;
@@ -314,7 +316,8 @@ void displayToLcd(int packNumber,bool isSucess)
 
   String cellVoltage = "";
 
- for (int i = 0; i < 15; i++)
+  const int nShow = naradaClient.batInfo[packNumber].voltageNumber;
+  for (int i = 0; i < 16; i++)
   {
     cellVoltage = "";
     cellVoltage += String(naradaClient.batInfo[packNumber].voltage[i] / 1000.0f);
@@ -334,7 +337,7 @@ void displayToLcd(int packNumber,bool isSucess)
       cellVoltage += "\n(" + tTemperature4 + ")";
       break;
     }
-    if (isSucess)
+    if (isSucess && i < nShow)
       setLabelIfChanged(ui_cellVoltage[i], cellVoltage.c_str());
   }
   // if(isSucess)lv_label_set_text((lv_obj_t *)ui_packVoltage[packNumber], String( naradaClient.batInfo[packNumber].totalVoltage!=0 ? naradaClient.batInfo[packNumber].totalVoltage/100.0f:0).c_str());
@@ -356,7 +359,7 @@ void printPackData(int packNumber){
   //naradaClient.copynaradaClient.batInfoData(packNumber,&dest);
   
   Serial.printf("\nnaradaClient.batInfo[packNumber].voltage %d",naradaClient.batInfo[packNumber].voltageNumber );
-    for(int j=0;j<15;j++)
+    for(int j=0;j<16;j++)
       Serial.printf(" %d",naradaClient.batInfo[packNumber].voltage[j]);
   Serial.printf("\nnaradaClient.batInfo[packNumber].ampere %d",naradaClient.batInfo[packNumber].ampere  );
   Serial.printf("\nnaradaClient.batInfo[packNumber].soc%d",naradaClient.batInfo[packNumber].soc);

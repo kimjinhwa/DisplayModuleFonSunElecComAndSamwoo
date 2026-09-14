@@ -29,7 +29,7 @@ static void setLamp(lv_obj_t *lamp, bool on, uint32_t onColor)
 
 static uint16_t packAlarm(int pack)
 {
-  return (uint16_t)(samwooReg(pack, 13) | samwooReg(pack, 14) | samwooReg(pack, 15));
+  return (uint16_t)(samwooReg(pack, SAMWOO_REG_FAULT) | samwooReg(pack, SAMWOO_REG_PROTECT) | samwooReg(pack, SAMWOO_REG_WARNING));
 }
 
 bool statusLedsHasAlarm(int pack)
@@ -37,11 +37,11 @@ bool statusLedsHasAlarm(int pack)
   return packAlarm(pack) != 0;
 }
 
-/* 삼우에스비 통신맵 20260816. Protect/Warning 동일 비트, Fault는 별도. */
+/* 실팩=통신_RX 시트. Protect/Warning 동일 비트, Fault는 별도. */
 static const char *alarmCause(int pack)
 {
-  const uint16_t fault = samwooReg(pack, 13);
-  const uint16_t pw = (uint16_t)(samwooReg(pack, 14) | samwooReg(pack, 15));
+  const uint16_t fault = samwooReg(pack, SAMWOO_REG_FAULT);
+  const uint16_t pw = (uint16_t)(samwooReg(pack, SAMWOO_REG_PROTECT) | samwooReg(pack, SAMWOO_REG_WARNING));
   if (pw == 0 && fault == 0)
   {
     return NULL;
@@ -242,7 +242,7 @@ void statusLedsLoop()
   }
 
   const bool comm = (int32_t)(sCommUntilMs - millis()) > 0;
-  const uint16_t relay = samwooReg(pack, 12);
+  const uint16_t relay = samwooReg(pack, SAMWOO_REG_RELAY);
   const bool chg = (relay & 0x0001) != 0;
   const bool dsg = (relay & 0x0002) != 0;
   const bool warn = (packAlarm(0) | packAlarm(1)) != 0;
