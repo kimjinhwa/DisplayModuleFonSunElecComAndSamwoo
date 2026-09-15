@@ -202,6 +202,27 @@ static void factoryResetNow(void)
   delay(1500);
   ESP.restart();
 }
+static lv_obj_t *sSettingsMacLabel;
+
+static void settingsShowMac(void)
+{
+  if (ui_Panel4 == NULL)
+  {
+    return;
+  }
+  if (sSettingsMacLabel == NULL)
+  {
+    sSettingsMacLabel = lv_label_create(ui_SetRightPannel);
+    lv_obj_set_width(sSettingsMacLabel, LV_SIZE_CONTENT);
+    lv_obj_set_style_text_color(sSettingsMacLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    lv_obj_set_style_text_opa(sSettingsMacLabel, 255, LV_PART_MAIN);
+    lv_obj_align_to(sSettingsMacLabel, ui_Panel4, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 4);
+  }
+  char buf[56];
+  snprintf(buf, sizeof(buf), "MacAddress : %s", ethW610MacString().c_str());
+  lv_label_set_text(sSettingsMacLabel, buf);
+}
+
 void setMemoryDataToLCD(){
 
   IPAddress ipaddress(ipAddress_struct.IPADDRESS);
@@ -224,6 +245,7 @@ void setMemoryDataToLCD(){
 
   lv_label_set_text(ui_HeaderTitle,ipAddress_struct.deviceName);
   lv_textarea_set_text(ui_txtDEVICENAME,ipAddress_struct.deviceName);
+  settingsShowMac();
 
   BoardRtcTime rtc = {};
   bool have = false;
@@ -524,5 +546,5 @@ void loop()
     }
   }
   lv_timer_handler();
-  vTaskDelay(5);
+  vTaskDelay(15);
 }

@@ -6,7 +6,7 @@
 아래 옵션을 맞춘다.
 
   삼우: STX 0x3A + 이진 + LRC + CR LF  (xls 2026-08-16)
-  응답 length: bytes=0x60(지금 펌웨어) / regs=0x30(문서 예제)
+  응답 length: regs=0x30(실팩·지금 펌웨어) / bytes=0x60(구 펌웨어)
   start=1을 첫 레지스터로: 문서 TX 00 01
 """
 import os
@@ -29,6 +29,7 @@ from samwoo_proto import (  # noqa: E402
     lrc8,
     make_defaults,
     register_name,
+    save_pack_state,
 )
 
 import serial
@@ -405,8 +406,9 @@ class SimulatorApp:
         self.pack2 = PackPanel(body, "2번 배터리팩  (Slave %d)" % SLAVE_RIGHT, SLAVE_RIGHT, make_defaults(1))
         self.pack1.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
         self.pack2.grid(row=0, column=1, sticky="nsew", padx=(4, 0))
-        self.pack1.on_change = self._sync_rtu_from_store
-        self.pack2.on_change = self._sync_rtu_from_store
+        self.pack1.on_change = self._on_pack_change
+        self.pack2.on_change = self._on_pack_change
+        self._persist_packs()
         self.packs = {SLAVE_LEFT: self.pack1.store, SLAVE_RIGHT: self.pack2.store}
 
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -448,6 +450,7 @@ class SimulatorApp:
             return
         self.pack1.apply_all()
         self.pack2.apply_all()
+        self._persist_packs()
         mode = self.mode_var.get()
         try:
             if mode == MODE_RTU:
@@ -469,6 +472,13 @@ class SimulatorApp:
         if not silent:
             messagebox.showinfo("OK", "%s\n%s %d 8N1\nPack1 slave=%d, Pack2 slave=%d" % (
                 label, port, baud, SLAVE_LEFT, SLAVE_RIGHT))
+
+    def _persist_packs(self):
+        save_pack_state([self.pack1.store.snapshot(), self.pack2.store.snapshot()])
+
+    def _on_pack_change(self, slave_id, addr, value):
+        self._persist_packs()
+        self._sync_rtu_from_store(slave_id, addr, value)
 
     def _sync_rtu_from_store(self, slave_id, addr, value):
         slave = self.rtu_slaves.get(slave_id)
@@ -523,6 +533,9 @@ class SimulatorApp:
                 messagebox.showerror("Error", str(e))
 
     def on_close(self):
+        self.pack1.apply_all()
+        self.pack2.apply_all()
+        self._persist_packs()
         self.close_port(silent=True)
         self.root.destroy()
 

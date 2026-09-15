@@ -86,7 +86,7 @@ class _WifiScanSheetState extends State<WifiScanSheet> {
         return;
       }
 
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 4));
 
       final canGet = await WiFiScan.instance.canGetScannedResults();
       if (canGet != CanGetScannedResults.yes) {
@@ -192,6 +192,17 @@ class _WifiScanSheetState extends State<WifiScanSheet> {
                         );
                       },
                     ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Text(
+                'SSID는 32바이트까지입니다. androidHotspot1953 은 길이 문제가 아닙니다.\n'
+                '이 휴대폰에서 켠 핫스팟은 같은 폰 검색 목록에 안 나옵니다. SSID를 직접 입력하세요. '
+                '다른 ESP32가 그 핫스팟에 붙는 것은 정상입니다.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
             ),
           ],
         ),

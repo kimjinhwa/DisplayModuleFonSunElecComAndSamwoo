@@ -20,6 +20,7 @@ python/dist/
 python/*.spec
 python/simulator/build/
 python/simulator/*.spec
+python/simulator/pack_state.json
 
 # Flutter companion app
 IFTECH_SAMWOO_App/.dart_tool/

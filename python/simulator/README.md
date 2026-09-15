@@ -21,6 +21,7 @@ powershell -ExecutionPolicy Bypass -File .\makeExe.ps1
 - 기본 모드 **삼우 STX+LRC**, 19200 8N1 (업체 확인), slave 1 / 2
 - **응답 length**: 레지스터수 `0x30`(실팩). 구 펌웨어용 바이트수 `0x60` 은 옵션.
 - 요청 start는 **1만** 사용. 맵은 통신_RX (Relay@10, 셀@15).
+- 공장값: `pack_defaults.json` (실팩1 랩 캡처, 팩2는 동일). 편집값은 `pack_state.json` (다음 실행에 유지, git 제외).
 - Debug 체크 시 Rx/Tx 헥스
 - 표준 Modbus RTU 는 비교용으로만 둔다.
 

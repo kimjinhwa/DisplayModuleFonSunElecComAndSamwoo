@@ -3,6 +3,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../ble/ble_constants.dart';
 import '../ble/nus_ble_service.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -14,6 +15,14 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   bool _requesting = false;
+  bool _showAll = false;
+  final _queryCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _queryCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -68,11 +77,15 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  Future<void> _onScan() async {
+  Future<void> _onScan({bool showAll = false}) async {
     final ok = await _requestPermissions();
     if (!ok) return;
     if (!mounted) return;
-    await context.read<NusBleService>().startScan();
+    setState(() => _showAll = showAll);
+    await context.read<NusBleService>().startScan(
+          extraQuery: showAll ? '' : _queryCtrl.text,
+          showAll: showAll,
+        );
   }
 
   Future<void> _onConnect(ScanResult result) async {
@@ -133,7 +146,9 @@ class _ScanScreenState extends State<ScanScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
-                'IFTECH_SW_ 장비를 고르세요.\n뒤로 또는 취소하면 연결하지 않고 나갑니다.',
+                _showAll
+                    ? '주변 BLE 장비를 모두 표시합니다. 광고에 이름이 없는 장치는 주소만 보입니다.\n뒤로 또는 취소하면 연결하지 않고 나갑니다.'
+                    : '이름에 UPS, BMS, IFTECH, IFT가 포함된 장비를 찾습니다.\n검색어를 넣으면 그 글자가 들어간 이름도 함께 찾습니다.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -141,10 +156,47 @@ class _ScanScreenState extends State<ScanScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: FilledButton.icon(
-                onPressed: scanning || connecting ? null : _onScan,
-                icon: Icon(scanning ? Icons.bluetooth_searching : Icons.search),
-                label: Text(scanning ? '검색 중…' : '다시 검색'),
+              child: TextField(
+                controller: _queryCtrl,
+                enabled: !scanning && !connecting,
+                textInputAction: TextInputAction.search,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: '검색어',
+                  hintText: '이름에 포함된 글자 (선택)',
+                  prefixIcon: Icon(Icons.filter_alt_outlined),
+                ),
+                onSubmitted: (_) {
+                  if (!scanning && !connecting) _onScan();
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed:
+                          scanning || connecting ? null : () => _onScan(),
+                      icon: Icon(
+                        scanning ? Icons.bluetooth_searching : Icons.search,
+                      ),
+                      label: Text(scanning && !_showAll ? '검색 중…' : '검색'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: scanning || connecting
+                          ? null
+                          : () => _onScan(showAll: true),
+                      icon: const Icon(Icons.radar),
+                      label: Text(scanning && _showAll ? '전체 중…' : '전체검색'),
+                    ),
+                  ),
+                ],
               ),
             ),
             if (ble.error != null)
@@ -172,9 +224,10 @@ class _ScanScreenState extends State<ScanScreen> {
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final r = ble.scanResults[index];
-                        final name = r.device.platformName.isNotEmpty
-                            ? r.device.platformName
-                            : '(이름 없음)';
+                        final advertised = BleConstants.advertisedName(r);
+                        final name = advertised.isNotEmpty
+                            ? advertised
+                            : r.device.remoteId.str;
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(

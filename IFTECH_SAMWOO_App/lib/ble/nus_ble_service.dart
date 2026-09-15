@@ -46,6 +46,8 @@ class NusBleService extends ChangeNotifier {
   String? _deviceSsid;
   String? _devicePass;
   String? _deviceName;
+  String? _wifiMac;
+  String? _ethMac;
   UpsRatingConfig? _deviceRating;
   int _wifiConfigVersion = 0;
   int _nameConfigVersion = 0;
@@ -70,6 +72,22 @@ class NusBleService extends ChangeNotifier {
 
   /// Last `NAME :` from device CLI.
   String? get deviceName => _deviceName;
+
+  /// Last `WIFI MAC :` from `mac` CLI (colon hex).
+  String? get wifiMac => _wifiMac;
+
+  /// Last `ETH MAC :` from `mac` CLI.
+  String? get ethMac => _ethMac;
+
+  /// WiFi MAC, or trailing hex from BLE name `IFTECH_SW_xx:xx:...`.
+  String? get displayMac {
+    if (_wifiMac != null && _wifiMac!.isNotEmpty) return _wifiMac;
+    final n = _device?.platformName ?? '';
+    final m = RegExp(r'IFTECH_SW_(.+)$', caseSensitive: false).firstMatch(n);
+    final fromName = m?.group(1)?.trim();
+    if (fromName != null && fromName.isNotEmpty) return fromName;
+    return _ethMac;
+  }
 
   int get nameConfigVersion => _nameConfigVersion;
 
@@ -96,7 +114,11 @@ class NusBleService extends ChangeNotifier {
     return true;
   }
 
-  Future<void> startScan({Duration timeout = const Duration(seconds: 8)}) async {
+  Future<void> startScan({
+    Duration timeout = const Duration(seconds: 8),
+    String extraQuery = '',
+    bool showAll = false,
+  }) async {
     if (!await ensureAdapterOn()) return;
 
     await stopScan();
@@ -109,28 +131,23 @@ class NusBleService extends ChangeNotifier {
       await FlutterBluePlus.startScan(
         timeout: timeout,
         androidUsesFineLocation: true,
+        androidScanMode: AndroidScanMode.lowLatency,
       );
 
       _scanSub = FlutterBluePlus.scanResults.listen((results) {
-        final filtered = results.where((r) {
-          final name = r.device.platformName;
-          return name.startsWith(BleConstants.deviceNamePrefix);
-        }).toList();
-
-        // Also keep unnamed devices that advertise NUS service
-        for (final r in results) {
-          final hasNus = r.advertisementData.serviceUuids.any(
-            (u) => u.str.toUpperCase() == BleConstants.serviceUuid.toUpperCase(),
-          );
-          if (hasNus && !filtered.any((f) => f.device.remoteId == r.device.remoteId)) {
-            filtered.add(r);
-          }
-        }
+        final filtered = results
+            .where(
+              (r) => BleConstants.matchesScanFilter(
+                r,
+                extraQuery: extraQuery,
+                showAll: showAll,
+              ),
+            )
+            .toList();
 
         _scanResults
           ..clear()
           ..addAll(filtered);
-        // Prefer strongest RSSI first
         _scanResults.sort((a, b) => b.rssi.compareTo(a.rssi));
         notifyListeners();
       });
@@ -214,8 +231,10 @@ class NusBleService extends ChangeNotifier {
       _appendLog('연결됨. 명령을 전송할 수 있습니다.');
       notifyListeners();
       Future.delayed(const Duration(milliseconds: 250), () async {
+        if (!isConnected) return;
         await fetchStoredWifi();
         await fetchStoredName();
+        await fetchStoredMac();
       });
     } catch (e) {
       _appendLog('연결 실패: $e');
@@ -237,6 +256,8 @@ class NusBleService extends ChangeNotifier {
     _deviceSsid = null;
     _devicePass = null;
     _deviceName = null;
+    _wifiMac = null;
+    _ethMac = null;
     _deviceRating = null;
     _state = BleConnectionState.disconnected;
     if (notify) {
@@ -265,7 +286,6 @@ class NusBleService extends ChangeNotifier {
 
     try {
       final bytes = utf8.encode(cmd);
-      // Chunk for BLE ATT payload (leave room under MTU)
       const chunk = 160;
       for (var i = 0; i < bytes.length; i += chunk) {
         final end = (i + chunk < bytes.length) ? i + chunk : bytes.length;
@@ -320,6 +340,11 @@ class NusBleService extends ChangeNotifier {
     await sendCommand('name', clearFirst: false);
   }
 
+  Future<void> fetchStoredMac() async {
+    if (!isConnected) return;
+    await sendCommand('mac', clearFirst: false);
+  }
+
   Future<void> setDeviceName(String name) async {
     await sendCommand('name $name');
   }
@@ -356,6 +381,9 @@ class NusBleService extends ChangeNotifier {
       if (fromDevice && _parseNameLine(line)) {
         nameUpdated = true;
       }
+      if (fromDevice && _parseMacLine(line)) {
+        // fields updated; notifyListeners below
+      }
       if (fromDevice && _parseRatingConfigLine(line)) {
         ratingUpdated = true;
       }
@@ -382,6 +410,23 @@ class NusBleService extends ChangeNotifier {
     if (m == null) return false;
     _deviceName = m.group(1)?.trim() ?? '';
     return true;
+  }
+
+  bool _parseMacLine(String line) {
+    final trimmed = line.trim();
+    final wifi = RegExp(r'^WIFI\s*MAC\s*:\s*(.+)$', caseSensitive: false)
+        .firstMatch(trimmed);
+    if (wifi != null) {
+      _wifiMac = wifi.group(1)?.trim() ?? '';
+      return true;
+    }
+    final eth = RegExp(r'^ETH\s*MAC\s*:\s*(.+)$', caseSensitive: false)
+        .firstMatch(trimmed);
+    if (eth != null) {
+      _ethMac = eth.group(1)?.trim() ?? '';
+      return true;
+    }
+    return false;
   }
 
   /// Parse `SSID : xxx` / `PASS : yyy` / `PASS : (open)` from ESP32 CLI.

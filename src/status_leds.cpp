@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "samwoo_poll.h"
 #include "SerialProtocalParse.h"
+#include "Version.h"
 
 static lv_obj_t *sLampComm;
 static lv_obj_t *sLampChg;
@@ -153,11 +154,12 @@ static lv_obj_t *makeItem(lv_obj_t *parent, const char *caption, lv_obj_t **lamp
 {
   lv_obj_t *box = lv_obj_create(parent);
   lv_obj_remove_style_all(box);
-  lv_obj_set_size(box, 48, 44);
-  lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_size(box, LV_SIZE_CONTENT, 44);
+  lv_obj_set_flex_flow(box, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(box, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_clear_flag(box, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-  lv_obj_set_style_pad_row(box, 2, 0);
+  lv_obj_set_style_pad_column(box, 4, 0);
+  lv_obj_set_style_pad_hor(box, 2, 0);
 
   lv_obj_t *lamp = lv_obj_create(box);
   lv_obj_remove_style_all(lamp);
@@ -185,12 +187,12 @@ void statusLedsBegin()
   lv_obj_set_style_pad_right(ui_MainBottomPannel, 6, 0);
 
   lv_obj_set_width(ui_CompanyLabel, 108);
-  lv_obj_set_height(ui_CompanyLabel, 44);
+  lv_obj_set_height(ui_CompanyLabel, LV_SIZE_CONTENT);
   lv_obj_set_style_text_align(ui_CompanyLabel, LV_TEXT_ALIGN_LEFT, 0);
 
   lv_obj_t *bar = lv_obj_create(ui_MainBottomPannel);
   lv_obj_remove_style_all(bar);
-  lv_obj_set_size(bar, 200, 44);
+  lv_obj_set_size(bar, 280, 44);
   lv_obj_set_flex_flow(bar, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(bar, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_clear_flag(bar, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -199,17 +201,30 @@ void statusLedsBegin()
   makeItem(bar, "충전", &sLampChg);
   makeItem(bar, "방전", &sLampDsg);
   makeItem(bar, "경고", &sLampWarn);
+  const lv_coord_t ledY = -8;
+  lv_obj_set_style_translate_x(bar, 30, 0);
+  lv_obj_set_style_translate_y(bar, ledY, 0);
 
   lv_obj_set_width(ui_CompanyLabel1, LV_SIZE_CONTENT);
-  lv_obj_set_height(ui_CompanyLabel1, 44);
+  lv_obj_set_height(ui_CompanyLabel1, LV_SIZE_CONTENT);
   lv_obj_set_flex_grow(ui_CompanyLabel1, 1);
   lv_obj_set_style_text_align(ui_CompanyLabel1, LV_TEXT_ALIGN_LEFT, 0);
   lv_obj_set_style_text_font(ui_CompanyLabel1, &ui_font_malgunFont1, 0);
   lv_obj_set_style_pad_left(ui_CompanyLabel1, 2, 0);
+  lv_obj_set_style_translate_x(ui_CompanyLabel1, 30, 0);
   lv_label_set_text(ui_CompanyLabel1, "STATUS:#1 정상");
 
-  lv_obj_set_width(ui_VersionLabel, 72);
-  lv_obj_set_height(ui_VersionLabel, 44);
+  lv_obj_set_width(ui_VersionLabel, 96);
+  lv_obj_set_height(ui_VersionLabel, LV_SIZE_CONTENT);
+  lv_label_set_text_fmt(ui_VersionLabel, "V%s", VERSION);
+  if (ui_VersionLabel1 != NULL)
+  {
+    lv_label_set_text_fmt(ui_VersionLabel1, "V%s", VERSION);
+  }
+
+  lv_obj_set_style_translate_y(ui_CompanyLabel, ledY, 0);
+  lv_obj_set_style_translate_y(ui_CompanyLabel1, ledY, 0);
+  lv_obj_set_style_translate_y(ui_VersionLabel, ledY, 0);
 
   lv_obj_move_to_index(ui_CompanyLabel, 0);
   lv_obj_move_to_index(bar, 1);

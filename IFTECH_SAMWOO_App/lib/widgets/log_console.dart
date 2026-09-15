@@ -7,7 +7,7 @@ class LogConsole extends StatefulWidget {
   const LogConsole({
     super.key,
     required this.lines,
-    this.shareTitle = 'IFTECH UPS Log',
+    this.shareTitle = 'FW UPDATE Log',
     this.onClear,
     this.onFullScreen,
   });
@@ -29,13 +29,10 @@ class _LogConsoleState extends State<LogConsole> {
     super.didUpdateWidget(oldWidget);
     if (widget.lines.length != oldWidget.lines.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_controller.hasClients) {
-          _controller.animateTo(
-            _controller.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          );
-        }
+        if (!mounted || !_controller.hasClients) return;
+        final pos = _controller.position;
+        if (!pos.hasContentDimensions) return;
+        _controller.jumpTo(pos.maxScrollExtent);
       });
     }
   }
@@ -173,7 +170,7 @@ class FullScreenLogPage extends StatefulWidget {
     super.key,
     required this.lines,
     this.title = 'LOG',
-    this.shareTitle = 'IFTECH UPS Log',
+    this.shareTitle = 'FW UPDATE Log',
     this.onClear,
   });
 
@@ -194,13 +191,10 @@ class _FullScreenLogPageState extends State<FullScreenLogPage> {
     super.didUpdateWidget(oldWidget);
     if (widget.lines.length != oldWidget.lines.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_controller.hasClients) {
-          _controller.animateTo(
-            _controller.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          );
-        }
+        if (!mounted || !_controller.hasClients) return;
+        final pos = _controller.position;
+        if (!pos.hasContentDimensions) return;
+        _controller.jumpTo(pos.maxScrollExtent);
       });
     }
   }

@@ -1,5 +1,5 @@
 
-#define VERSION "1.0.77"
+#define VERSION "1.0.88"
 /* 
 문제 해결 완료.
 */

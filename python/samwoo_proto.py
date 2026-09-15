@@ -7,6 +7,8 @@
 """
 from __future__ import print_function
 
+import os
+
 QTY = 48
 SLAVE_LEFT = 1
 SLAVE_RIGHT = 2
@@ -95,29 +97,59 @@ def register_name(addr, mapping="rx"):
     return "R%d" % addr
 
 
+_SIM_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "simulator")
+PACK_DEFAULTS_PATH = os.path.join(_SIM_DIR, "pack_defaults.json")
+PACK_STATE_PATH = os.path.join(_SIM_DIR, "pack_state.json")
+
+
+def _normalize_regs(regs):
+    out = [0] * QTY
+    if not regs:
+        return out
+    for i, v in enumerate(regs[:QTY]):
+        out[i] = int(v) & 0xFFFF
+    return out
+
+
+def _read_json(path):
+    try:
+        import json
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def _factory_pack_regs(pack_index):
+    data = _read_json(PACK_DEFAULTS_PATH)
+    packs = (data or {}).get("packs") or []
+    if pack_index < len(packs) and isinstance(packs[pack_index], dict):
+        return _normalize_regs(packs[pack_index].get("regs"))
+    return [0] * QTY
+
+
 def make_defaults(pack_index):
-    d = [0] * QTY
-    d[0] = 10 + pack_index
-    d[1] = 1000
-    d[2] = 85 if pack_index == 0 else 70
-    d[3] = 98 if pack_index == 0 else 95
-    d[4] = 540 if pack_index == 0 else 528
-    d[5] = 25 if pack_index == 0 else 18
-    d[6] = 3400 if pack_index == 0 else 3380
-    d[7] = 3300 if pack_index == 0 else 3280
-    d[8] = 250 if pack_index == 0 else 245
-    d[9] = 240 if pack_index == 0 else 235
-    d[10] = 0x07
-    d[11] = 0
-    d[12] = 0
-    d[13] = 0
-    d[14] = 16
-    for i in range(16):
-        d[15 + i] = (3350 if pack_index == 0 else 3320) + i
-    d[31] = 8
-    for i in range(8):
-        d[32 + i] = 250 if pack_index == 0 else 245
-    return d
+    """pack_state.json(마지막 편집) → pack_defaults.json(실팩 캡처) 순."""
+    state = _read_json(PACK_STATE_PATH)
+    packs = (state or {}).get("packs") or []
+    if pack_index < len(packs) and isinstance(packs[pack_index], dict):
+        regs = packs[pack_index].get("regs")
+        if regs:
+            return _normalize_regs(regs)
+    return _factory_pack_regs(pack_index)
+
+
+def save_pack_state(pack_regs_list):
+    import json
+    packs = []
+    for i, regs in enumerate(pack_regs_list):
+        packs.append({"slave": i + 1, "regs": _normalize_regs(regs)})
+    os.makedirs(_SIM_DIR, exist_ok=True)
+    tmp = PACK_STATE_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump({"packs": packs}, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, PACK_STATE_PATH)
 
 
 def words_from_bytes(data):
@@ -234,7 +266,7 @@ def length_verdict(info):
     regs = info.get("regs") or []
     notes = []
     if n == 0x30:
-        notes.append("length=0x30 → 문서 프로토콜 시트(레지스터 48). 펌웨어는 바이트수>=96을 기대해 파싱 실패.")
+        notes.append("length=0x30 → 레지스터 48. 펌웨어 parseRegisters 는 0x30 또는 0x60 둘 다 허용.")
     elif n == 0x60:
         notes.append("length=0x60 → 표준 Modbus 바이트수(96). 지금 펌웨어·시뮬레이터와 같음.")
     elif n == 0xEF:

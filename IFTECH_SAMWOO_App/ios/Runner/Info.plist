@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>IFTECH UPS</string>
+	<string>FW UPDATE</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>UPS 장비와 BLE로 연결하여 Wi-Fi 설정 및 명령을 전송합니다.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>

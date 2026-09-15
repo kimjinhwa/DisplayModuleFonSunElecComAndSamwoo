@@ -1,7 +1,7 @@
 # IFTECH_SAMWOO_App
 
-삼우 리튬 디스플레이 BLE·Wi‑Fi OTA용 Flutter 앱입니다.  
-앱 이름 **IFTECH SAMWOO**, 패키지 `com.iftech.iftech_samwoo_app`.
+BLE 장비의 Wi‑Fi OTA·CLI 설정용 공용 Flutter 앱입니다.  
+앱 표시 이름 **FW UPDATE**, 패키지 `com.iftech.iftech_samwoo_app`.
 
 장비 BLE 이름: `IFTECH_SW_<MAC>`  
 검색 prefix는 `IFTECH_` 입니다.
