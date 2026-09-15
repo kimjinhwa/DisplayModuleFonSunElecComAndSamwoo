@@ -50,11 +50,19 @@ bool ethW610Begin(IPAddress ip, IPAddress gateway, IPAddress subnet, IPAddress d
   uint8_t mac[6];
   fillMac(mac);
   SPI.begin(PIN_W610_SCLK, PIN_W610_MISO, PIN_W610_MOSI, PIN_W610_CS);
-  Ethernet.init(PIN_W610_CS);
-  Ethernet.begin(mac, ip, dns, gateway, subnet);
-  delay(200);
+  for (int n = 0; n < 5; ++n)
+  {
+    Ethernet.init(PIN_W610_CS);
+    Ethernet.begin(mac, ip, dns, gateway, subnet);
+    delay(250);
+    if (Ethernet.getChip() == w6100)
+    {
+      break;
+    }
+    Serial.printf("[W610] init miss chip=%d try=%d\n", (int)Ethernet.getChip(), n + 1);
+  }
   ethW610PrintStatus();
-  return Ethernet.getChip() == w6100 || Ethernet.localIP() == ip;
+  return Ethernet.getChip() == w6100;
 }
 
 void ethW610PrintStatus()
@@ -73,6 +81,22 @@ void ethW610PrintStatus()
   Serial.print(Ethernet.localIP());
   Serial.print(" link=");
   Serial.println(Ethernet.linkReport());
+}
+
+bool ethW610LinkUp()
+{
+  const char *r = Ethernet.linkReport();
+  return r != nullptr && strcmp(r, "LINK") == 0;
+}
+
+bool ethW610IpUsable()
+{
+  if (Ethernet.getChip() != w6100)
+  {
+    return false;
+  }
+  const IPAddress ip = Ethernet.localIP();
+  return ip[0] >= 1 && ip[0] < 224;
 }
 
 void ethW610CliStatus(Print &out)

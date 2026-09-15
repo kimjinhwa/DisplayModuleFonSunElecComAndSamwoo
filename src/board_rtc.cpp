@@ -1,6 +1,8 @@
 #include "board_rtc.h"
 #include "board_pins.h"
 #include <Wire.h>
+#include <sys/time.h>
+#include <time.h>
 
 static uint8_t bin2bcd(uint8_t v) { return (uint8_t)(((v / 10) << 4) | (v % 10)); }
 static uint8_t bcd2bin(uint8_t v) { return (uint8_t)(((v >> 4) * 10) + (v & 0x0F)); }
@@ -54,5 +56,49 @@ bool boardRtcWrite(const BoardRtcTime &t)
   Wire.write(bin2bcd((uint8_t)(t.year % 100)));
   const bool ok = Wire.endTransmission() == 0;
   Wire.setClock(400000);
+  if (ok)
+  {
+    boardRtcApplyToEsp(t);
+  }
   return ok;
+}
+
+void boardRtcApplyToEsp(const BoardRtcTime &t)
+{
+  struct tm tm = {};
+  tm.tm_year = (int)t.year - 1900;
+  tm.tm_mon = (int)t.month - 1;
+  tm.tm_mday = t.day;
+  tm.tm_hour = t.hour;
+  tm.tm_min = t.minute;
+  tm.tm_sec = t.second;
+  tm.tm_isdst = -1;
+  const time_t sec = mktime(&tm);
+  if (sec == (time_t)-1)
+  {
+    return;
+  }
+  struct timeval tv;
+  tv.tv_sec = sec;
+  tv.tv_usec = 0;
+  settimeofday(&tv, NULL);
+}
+
+bool boardRtcSyncEsp(void)
+{
+  BoardRtcTime t;
+  if (!boardRtcRead(&t))
+  {
+    return false;
+  }
+  if (t.halted)
+  {
+    return false;
+  }
+  if (t.year < 2000 || t.month < 1 || t.month > 12)
+  {
+    return false;
+  }
+  boardRtcApplyToEsp(t);
+  return true;
 }

@@ -35,7 +35,6 @@ extern uint32_t samwooErrorCount;
 void samwooBegin();
 bool samwooPoll();
 bool samwooPollTick();
-void samwooFillNarada();
 uint16_t samwooReg(uint8_t pack, uint16_t address);
 
 #endif

@@ -24,6 +24,7 @@ typedef struct
     bool isUpdate;
     char ssid[20];
     char password[20];
+    uint16_t screenSaveMin;
 } nvsSystemSet;
 extern nvsSystemSet ipAddress_struct;
 void setMemoryDataToLCD();

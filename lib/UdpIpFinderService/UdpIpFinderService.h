@@ -52,6 +52,7 @@ public:
 
   bool begin(UDP *udp);
   void poll();
+  bool isHeld() const { return holdUntil_ != 0 && (int32_t)(millis() - holdUntil_) < 0; }
   void setConfig(const Config &config);
 
   void setCallbacks(BuildSnapshotCallback buildSnapshot,
@@ -65,8 +66,12 @@ private:
   void handleDeviceDiscovery(const JsonDocument &request);
   void handleTrapTest(const JsonDocument &request);
   void sendJsonResponse(const JsonDocument &response);
+  void holdSockets(uint32_t ms);
 
+  UDP *sock_ = nullptr;
   UDP *udp_ = nullptr;
+  uint32_t holdUntil_ = 0;
+  uint8_t txFail_ = 0;
   BuildSnapshotCallback buildSnapshotCb_ = nullptr;
   ApplyNetworkCallback applyNetworkCb_ = nullptr;
   RestartCallback restartCb_ = nullptr;

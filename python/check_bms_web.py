@@ -1,7 +1,7 @@
 """BMS 웹/SNMP/RS-485 스모크.
 
-  python python/check_bms_web.py --host 192.168.0.65 --port 81
-  python python/check_bms_web.py --host 192.168.0.65 --port 81 --upload
+  python python/check_bms_web.py --host 192.168.0.65 --port 80
+  python python/check_bms_web.py --host 192.168.0.65 --port 80 --upload
 """
 from __future__ import print_function
 
@@ -68,7 +68,7 @@ def snmp_get(host, oid):
 
 
 def detect_port(host, port):
-    for p in ([port] if port else []) + [81, 80]:
+    for p in ([port] if port else []) + [80, 81]:
         try:
             s = socket.create_connection((host, p), 2)
             s.close()
@@ -81,7 +81,7 @@ def detect_port(host, port):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="192.168.0.65")
-    ap.add_argument("--port", type=int, default=81)
+    ap.add_argument("--port", type=int, default=80)
     ap.add_argument("--upload", action="store_true")
     args = ap.parse_args()
 

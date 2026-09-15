@@ -19,4 +19,4 @@ pass 핫스팟암호
 
 서버: `http://ift.iptime.org:81/Esp32UploadFirmware/esp32_samwoo.json`
 
-웹 HTML만 바꿀 때는 브라우저 `http://장비IP:81/fileUpload` (포트는 설정값). 펌웨어 `.bin` 은 이 경로를 쓰지 마십시오.
+웹 HTML만 바꿀 때는 브라우저 `http://장비IP:80/fileUpload` (포트는 설정값). 펌웨어 `.bin` 은 이 경로를 쓰지 마십시오.

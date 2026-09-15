@@ -1,14 +1,11 @@
 #include "samwoo_poll.h"
 
 #include "board_pins.h"
-#include "naradav13.h"
 
 uint16_t samwooRegs[SAMWOO_PACKS][SAMWOO_REG_MAX] = {{0}};
 bool samwooOk[SAMWOO_PACKS] = {false, false};
 uint32_t samwooLastOkMs[SAMWOO_PACKS] = {0, 0};
 uint32_t samwooErrorCount = 0;
-
-extern NaradaClient232 naradaClient;
 
 static uint8_t lrc8(const uint8_t *data, size_t len)
 {
@@ -198,10 +195,6 @@ bool samwooPollTick()
 
   sState = ST_IDLE;
   sNextCycleMs = millis() + kCycleGapMs;
-  if (samwooOk[0] || samwooOk[1])
-  {
-    samwooFillNarada();
-  }
   logStatus();
   return true;
 }
@@ -226,38 +219,4 @@ uint16_t samwooReg(uint8_t pack, uint16_t address)
     return 0;
   }
   return samwooRegs[pack][address];
-}
-
-void samwooFillNarada()
-{
-  for (uint8_t pack = 0; pack < SAMWOO_PACKS; ++pack)
-  {
-    batteryInofo_t *b = &naradaClient.batInfo[pack];
-    if (!samwooOk[pack])
-    {
-      continue;
-    }
-    const uint16_t *r = samwooRegs[pack];
-    b->Capacity = (int)r[SAMWOO_REG_CAP];
-    b->soc = (int)r[SAMWOO_REG_SOC] * 100;
-    b->SOH = (int)r[SAMWOO_REG_SOH] * 100;
-    b->totalVoltage = (int)r[SAMWOO_REG_VOLT] * 10;
-    b->ampere = 30000 + (int16_t)r[SAMWOO_REG_CUR] * 10;
-    int nCell = (int)r[SAMWOO_REG_CELLNUM];
-    if (nCell < 1 || nCell > 16)
-    {
-      nCell = 16;
-    }
-    b->voltageNumber = nCell;
-    for (int i = 0; i < 16; ++i)
-    {
-      b->voltage[i] = (int)r[SAMWOO_REG_CELL0 + i];
-    }
-    b->TempreatureNumber = 4;
-    for (int i = 0; i < 4; ++i)
-    {
-      b->Tempreature[i] = 50 + ((int16_t)r[SAMWOO_REG_TEMP0 + i] / 10);
-    }
-    b->BMS_PROTECT_STATUS = (int)r[SAMWOO_REG_PROTECT];
-  }
 }

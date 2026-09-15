@@ -16,5 +16,7 @@ struct BoardRtcTime
 
 bool boardRtcRead(BoardRtcTime *t);
 bool boardRtcWrite(const BoardRtcTime &t);
+void boardRtcApplyToEsp(const BoardRtcTime &t);
+bool boardRtcSyncEsp(void);
 
 #endif

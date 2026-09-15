@@ -1,6 +1,6 @@
 """UploadFiles/ 를 장비 SPIFFS로 올린다. POST /upload, 필드명 update.
 
-  python python/upload_web.py --host 192.168.0.65 --port 81
+  python python/upload_web.py --host 192.168.0.65 --port 80
 """
 from __future__ import print_function
 
@@ -129,7 +129,7 @@ def main():
     default_dir = os.path.normpath(os.path.join(here, "..", "UploadFiles"))
     ap = argparse.ArgumentParser(description="SPIFFS 웹 파일 업로드")
     ap.add_argument("--host", default="192.168.0.65")
-    ap.add_argument("--port", type=int, default=81)
+    ap.add_argument("--port", type=int, default=80)
     ap.add_argument("--dir", default=default_dir)
     args = ap.parse_args()
     return 0 if run(args.host, args.port, args.dir) else 1

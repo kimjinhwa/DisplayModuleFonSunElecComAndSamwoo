@@ -11,14 +11,29 @@ static String normalizeMacForCompare(const String &mac)
 
 bool UdpIpFinderService::begin(UDP *udp)
 {
+  sock_ = udp;
   udp_ = udp;
   if (!udp_ || !udp_->begin(config_.port))
   {
     Serial.println("[IPFINDER] Failed to start UDP");
+    udp_ = nullptr;
     return false;
   }
+  holdUntil_ = 0;
+  txFail_ = 0;
   Serial.printf("[IPFINDER] UDP %u started\n", config_.port);
   return true;
+}
+
+void UdpIpFinderService::holdSockets(uint32_t ms)
+{
+  if (udp_)
+  {
+    udp_->stop();
+    udp_ = nullptr;
+  }
+  holdUntil_ = millis() + ms;
+  Serial.printf("[IPFINDER] UDP hold %u ms (no PHY; TX/size fail)\n", (unsigned)ms);
 }
 
 void UdpIpFinderService::setConfig(const Config &config)
@@ -45,6 +60,19 @@ void UdpIpFinderService::setTrapTestCallback(TrapTestCallback trapTest, void *ct
 
 void UdpIpFinderService::poll()
 {
+  if (holdUntil_)
+  {
+    if ((int32_t)(millis() - holdUntil_) < 0)
+    {
+      return;
+    }
+    holdUntil_ = 0;
+    if (sock_ && !begin(sock_))
+    {
+      holdSockets(4000);
+      return;
+    }
+  }
   if (!udp_)
   {
     return;
@@ -56,26 +84,44 @@ void UdpIpFinderService::poll()
     {
       return;
     }
+    /* Cable unplug: Wiznet returns a fake size. flush() SPI-drains and trips WDT/crash. */
+    if (packetSize > 1472)
+    {
+      holdSockets(4000);
+      return;
+    }
 
-    char incomingPacket[1024];
+    static char incomingPacket[1024];
     memset(incomingPacket, 0x00, sizeof(incomingPacket));
     const int maxReadable = static_cast<int>(sizeof(incomingPacket) - 1);
     const int readLen = (packetSize < maxReadable) ? packetSize : maxReadable;
     const int len = udp_->read(incomingPacket, readLen);
     if (len <= 0)
     {
+      udp_->flush();
       return;
     }
     incomingPacket[len] = '\0';
+    /* Wiznet: leftover bytes from a truncated datagram corrupt the next parsePacket. */
+    if (packetSize > len)
+    {
+      udp_->flush();
+    }
 
-    StaticJsonDocument<1024> request;
+    if (incomingPacket[0] != '{')
+    {
+      continue;
+    }
+    if (strstr(incomingPacket, "\"cmd\"") == NULL)
+    {
+      continue;
+    }
+
+    static StaticJsonDocument<1024> request;
+    request.clear();
     const DeserializationError error = deserializeJson(request, incomingPacket);
     if (error)
     {
-      Serial.printf("[IPFINDER] JSON parse failed: %s (packetSize=%d, read=%d)\n",
-                    error.c_str(),
-                    packetSize,
-                    len);
       continue;
     }
 
@@ -335,10 +381,21 @@ void UdpIpFinderService::sendJsonResponse(const JsonDocument &response)
   /* Same LAN, any IP group: unicast/gateway ARP fails across subnets.
      Reply to 255.255.255.255 + the requester UDP source port. */
   const uint16_t port = udp_->remotePort();
+  const IPAddress src = udp_->remoteIP();
+  const bool uni = sendUdpPayload(udp_, src, port, payload);
   const bool bcast = sendUdpPayload(udp_, IPAddress(255, 255, 255, 255), port, payload);
-  Serial.printf("[IPFINDER] TX %u bytes bcast=%d to 255.255.255.255:%u (from %s)\n",
+  Serial.printf("[IPFINDER] TX %u bytes uni=%d bcast=%d to %s:%u\n",
                 (unsigned)payload.length(),
+                uni ? 1 : 0,
                 bcast ? 1 : 0,
-                (unsigned)port,
-                udp_->remoteIP().toString().c_str());
+                src.toString().c_str(),
+                (unsigned)port);
+  if (uni || bcast)
+  {
+    txFail_ = 0;
+  }
+  else if (++txFail_ >= 2)
+  {
+    holdSockets(4000);
+  }
 }

@@ -2,16 +2,13 @@
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
 #include <TFT_eSPI.h>
-#include "src/ui.h"
+#include "ui.h"
 #include <EEPROM.h>
 #include "SerialProtocalParse.h"
 #include "main.h"
-#include "src/ui.h"
 #include "wifiOTA.h"
 #include <esp_task_wdt.h>
-#include "naradav13.h"
 #include <esp_wifi.h>
-//#include "lv_i18n/lv_i18n.h" 
 #include <Wire.h>
 #include "board_pins.h"
 #include "eth_w610.h"
@@ -22,10 +19,13 @@
 #include "status_leds.h"
 #include "myBlueTooth.h"
 #include "Version.h"
-#define GFX_BL DF_GFX_BL // default backlight pin, you may replace DF_GFX_BL to actual backlight pin
+#include "board_rtc.h"
+#include <time.h>
+#define GFX_BL DF_GFX_BL
 #define TFT_BL 2
-#define BRIGHT  155 
-#define WDT_TIMEOUT 15 
+#define BRIGHT  155
+#define WDT_TIMEOUT 15
+#define BUTTON_ERASE 0
 
 static uint32_t screenWidth;
 static uint32_t screenHeight;
@@ -34,11 +34,22 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf;
 static lv_disp_drv_t disp_drv;
 static unsigned long last_ms;
-//static lv_obj_t *led;
-#define LED_OFF_TIME 600
-uint16_t lcdOntime=0;
+uint16_t lcdOntime = 0;
+static bool sLcdDim = false;
 
-extern NaradaClient232 naradaClient;
+static uint16_t screenSaveSec(void)
+{
+  uint16_t m = ipAddress_struct.screenSaveMin;
+  if (m > 999)
+  {
+    m = 0;
+  }
+  if (m == 0)
+  {
+    return 0;
+  }
+  return (uint16_t)(m * 60u);
+}
 
 Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
     GFX_NOT_DEFINED /* CS */, GFX_NOT_DEFINED /* SCK */, GFX_NOT_DEFINED /* SDA */,
@@ -47,21 +58,14 @@ Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
     9 /* G0 */, 46 /* G1 */, 3 /* G2 */, 8 /* G3 */, 16 /* G4 */, 1 /* G5 */,
     15 /* B0 */, 7 /* B1 */, 6 /* B2 */, 5 /* B3 */, 4 /* B4 */
 );
-// option 1:
-// 7寸 50PIN 800*480
 Arduino_RPi_DPI_RGBPanel *gfx = new Arduino_RPi_DPI_RGBPanel(
   bus,
-//  800 /* width */, 0 /* hsync_polarity */, 8/* hsync_front_porch */, 2 /* hsync_pulse_width */, 43/* hsync_back_porch */,
-//  480 /* height */, 0 /* vsync_polarity */, 8 /* vsync_front_porch */, 2/* vsync_pulse_width */, 12 /* vsync_back_porch */,
-//  1 /* pclk_active_neg */, 16000000 /* prefer_speed */, true /* auto_flush */);
-
     800 /* width */, 0 /* hsync_polarity */, 210 /* hsync_front_porch */, 30 /* hsync_pulse_width */, 16 /* hsync_back_porch */,
     480 /* height */, 0 /* vsync_polarity */, 22 /* vsync_front_porch */, 13 /* vsync_pulse_width */, 10 /* vsync_back_porch */,
     1 /* pclk_active_neg */, 12000000 /* prefer_speed */, true /* auto_flush */);
-  
+
 #include "touch.h"
 #if LV_USE_LOG != 0
-/* Serial debugging */
 void my_print(const char * buf)
 {
     Serial.printf(buf);
@@ -69,7 +73,6 @@ void my_print(const char * buf)
 }
 #endif
 
-/* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
    uint32_t w = (area->x2 - area->x1 + 1);
@@ -100,10 +103,9 @@ static unsigned long last_touch_time = 0;
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
   unsigned long current_time = millis();
-  // 10분 이상 터치가 없었는지 확인
   if ((current_time - last_touch_time) > TOUCH_TIMEOUT)
   {
-    last_touch_time = current_time; // 타이머 리셋
+    last_touch_time = current_time;
     lv_obj_clear_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
     touch_init();
     Serial.println("\ntouch_init ok ");
@@ -118,11 +120,12 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
       data->point.x = touch_last_x;
       data->point.y = touch_last_y;
       lv_obj_clear_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
-      lv_obj_set_pos(cursor_obj, 
-                    touch_last_x - 10,  // 커서 중심이 터치 포인트에 오도록
-                    touch_last_y - 10); // 크기의 절
-      ledcWrite(0,BRIGHT);
-      lcdOntime=0;
+      lv_obj_set_pos(cursor_obj,
+                    touch_last_x - 10,
+                    touch_last_y - 10);
+      ledcWrite(0, BRIGHT);
+      lcdOntime = 0;
+      sLcdDim = false;
     }
     else
     {
@@ -137,10 +140,67 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
 nvsSystemSet ipAddress_struct;
 static bool sEthOk = false;
+static bool sEthSvc = false;
+static uint8_t sEraseHold = 0;
+static unsigned long sEthRetryMs = 0;
+
+static void ethServicesBeginIfNeeded(void)
+{
+  if (!sEthOk || sEthSvc)
+  {
+    return;
+  }
+  snmpBatteryBegin();
+  ipFinderBegin();
+  webHttpBegin();
+  sEthSvc = true;
+}
+
 void nvsSave()
 {
   EEPROM.writeBytes(1, (const byte *)&ipAddress_struct, sizeof(nvsSystemSet));
   EEPROM.commit();
+}
+
+static void nvsFactoryDefaults(void)
+{
+  memset(&ipAddress_struct, 0, sizeof(ipAddress_struct));
+  ipAddress_struct.IPADDRESS = (uint32_t)IPAddress(192, 168, 0, 57);
+  ipAddress_struct.GATEWAY = (uint32_t)IPAddress(192, 168, 0, 1);
+  ipAddress_struct.SUBNETMASK = (uint32_t)IPAddress(255, 255, 255, 0);
+  ipAddress_struct.WEBSOCKETSERVER = (uint32_t)IPAddress(192, 168, 0, 57);
+  ipAddress_struct.DNS1 = (uint32_t)IPAddress(8, 8, 8, 8);
+  ipAddress_struct.DNS2 = (uint32_t)IPAddress(164, 124, 101, 2);
+  ipAddress_struct.WEBSERVERPORT = 80;
+  ipAddress_struct.NTP_1 = (uint32_t)IPAddress(203, 248, 240, 140);
+  ipAddress_struct.NTP_2 = (uint32_t)IPAddress(13, 209, 84, 50);
+  ipAddress_struct.ntpuse = false;
+  ipAddress_struct.HighVoltage = 36500;
+  ipAddress_struct.LowVoltage = 26000;
+  ipAddress_struct.HighImp = 80000;
+  ipAddress_struct.HighTemp = 70;
+  ipAddress_struct.alarmSetStatus = 0;
+  strncpy(ipAddress_struct.deviceName, "BAT RACK1", 9);
+  ipAddress_struct.isUpdate = false;
+  strncpy(ipAddress_struct.ssid, "iftech", 6);
+  strncpy(ipAddress_struct.password, "iftech0273", 10);
+  ipAddress_struct.screenSaveMin = 0;
+}
+
+static void factoryResetNow(void)
+{
+  nvsFactoryDefaults();
+  EEPROM.writeByte(0, 0x57);
+  nvsSave();
+  Serial.println("[IO] factory reset IP=192.168.0.57 web=80 reboot");
+  if (ui_CompanyLabel3 != NULL)
+  {
+    lv_label_set_text(ui_CompanyLabel3, "초기화 후 재부팅");
+    lv_obj_set_style_text_font(ui_CompanyLabel3, &ui_font_malgunFont1, 0);
+    lv_timer_handler();
+  }
+  delay(1500);
+  ESP.restart();
 }
 void setMemoryDataToLCD(){
 
@@ -155,60 +215,113 @@ void setMemoryDataToLCD(){
   lv_textarea_set_text(ui_txtSUBNET2,String(subnet[1]).c_str());
   lv_textarea_set_text(ui_txtSUBNET3,String(subnet[2]).c_str());
   lv_textarea_set_text(ui_txtSUBNET4,String(subnet[3]).c_str());
-  
+
   IPAddress gateway(ipAddress_struct.GATEWAY);
   lv_textarea_set_text(ui_txtGATEWAY1,String(gateway[0]).c_str());
   lv_textarea_set_text(ui_txtGATEWAY2,String(gateway[1]).c_str());
   lv_textarea_set_text(ui_txtGATEWAY3,String(gateway[2]).c_str());
   lv_textarea_set_text(ui_txtGATEWAY4,String(gateway[3]).c_str());
 
-  // String HeaderText = ipAddress_struct.deviceName;
-  // HeaderText ;
   lv_label_set_text(ui_HeaderTitle,ipAddress_struct.deviceName);
   lv_textarea_set_text(ui_txtDEVICENAME,ipAddress_struct.deviceName);
-  lv_textarea_set_text(ui_txtYear,"");
-  lv_textarea_set_text(ui_txtMonth,"");
-  lv_textarea_set_text(ui_txtDay,"");
-  lv_textarea_set_text(ui_txtTime,"");
-  lv_textarea_set_text(ui_txtMinute,"");
-  lv_textarea_set_text(ui_txtMinute,"");
-  lv_textarea_set_text(ui_txtSecond,"");
 
-  lv_label_set_text(ui_DateLabel1,"");
-  lv_label_set_text(ui_TimeLabel1,"");
-  
+  BoardRtcTime rtc = {};
+  bool have = false;
+  time_t nowSec = time(NULL);
+  struct tm tmNow;
+  localtime_r(&nowSec, &tmNow);
+  if (tmNow.tm_year + 1900 >= 2020)
+  {
+    rtc.year = (uint16_t)(tmNow.tm_year + 1900);
+    rtc.month = (uint8_t)(tmNow.tm_mon + 1);
+    rtc.day = (uint8_t)tmNow.tm_mday;
+    rtc.hour = (uint8_t)tmNow.tm_hour;
+    rtc.minute = (uint8_t)tmNow.tm_min;
+    rtc.second = (uint8_t)tmNow.tm_sec;
+    have = true;
+  }
+  char n[8];
+  if (have)
+  {
+    snprintf(n, sizeof(n), "%04u", rtc.year);
+    lv_textarea_set_text(ui_txtYear, n);
+    snprintf(n, sizeof(n), "%02u", rtc.month);
+    lv_textarea_set_text(ui_txtMonth, n);
+    snprintf(n, sizeof(n), "%02u", rtc.day);
+    lv_textarea_set_text(ui_txtDay, n);
+    snprintf(n, sizeof(n), "%02u", rtc.hour);
+    lv_textarea_set_text(ui_txtTime, n);
+    snprintf(n, sizeof(n), "%02u", rtc.minute);
+    lv_textarea_set_text(ui_txtMinute, n);
+    snprintf(n, sizeof(n), "%02u", rtc.second);
+    lv_textarea_set_text(ui_txtSecond, n);
+  }
+  if (ui_txtScreenSaveTime != NULL)
+  {
+    uint16_t m = ipAddress_struct.screenSaveMin;
+    if (m > 999)
+    {
+      m = 0;
+    }
+    snprintf(n, sizeof(n), "%u", m);
+    lv_textarea_set_text(ui_txtScreenSaveTime, n);
+  }
 }
-void displayToLcd(int packNumber,bool isSucess);
-extern uint isModuleExgist[8];
+
+static void styleClockLabels(void)
+{
+  lv_obj_t *labs[] = {ui_DateLabel, ui_TimeLabel, ui_DateLabel1, ui_TimeLabel1};
+  for (unsigned i = 0; i < sizeof(labs) / sizeof(labs[0]); ++i)
+  {
+    if (labs[i] == NULL)
+    {
+      continue;
+    }
+    lv_obj_set_style_text_font(labs[i], &ui_font_arial16, 0);
+    lv_obj_set_style_text_color(labs[i], lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_height(labs[i], LV_SIZE_CONTENT);
+    lv_obj_set_width(labs[i], LV_SIZE_CONTENT);
+    lv_obj_clear_flag(labs[i], LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(labs[i]);
+  }
+}
+
+static void paintClock(void)
+{
+  time_t nowSec = time(NULL);
+  struct tm tmNow;
+  localtime_r(&nowSec, &tmNow);
+  char d[16];
+  char t[16];
+  if (tmNow.tm_year + 1900 < 2020)
+  {
+    snprintf(d, sizeof(d), "--");
+    snprintf(t, sizeof(t), "--");
+  }
+  else
+  {
+    snprintf(d, sizeof(d), "%04d-%02d-%02d", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday);
+    snprintf(t, sizeof(t), "%02d:%02d:%02d", tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec);
+  }
+  if (ui_DateLabel)
+    lv_label_set_text(ui_DateLabel, d);
+  if (ui_TimeLabel)
+    lv_label_set_text(ui_TimeLabel, t);
+  if (ui_DateLabel1)
+    lv_label_set_text(ui_DateLabel1, d);
+  if (ui_TimeLabel1)
+    lv_label_set_text(ui_TimeLabel1, t);
+}
 
 void setup()
 {
   Serial.begin(BAUDRATEDEF);
   Serial.printf("\n[BOOT] VERSION %s env=esp32_samwoo\n", VERSION);
   EEPROM.begin(256);
+  pinMode(BUTTON_ERASE, INPUT_PULLUP);
   if (EEPROM.read(0) != 0x57)
   {
-    ipAddress_struct.IPADDRESS = (uint32_t)IPAddress(192, 168, 0, 57);
-    ipAddress_struct.GATEWAY = (uint32_t)IPAddress(192, 168, 0, 1);
-    ipAddress_struct.SUBNETMASK = (uint32_t)IPAddress(255, 255, 255, 0);
-    ipAddress_struct.WEBSOCKETSERVER = (uint32_t)IPAddress(192, 168, 0, 57);
-    ipAddress_struct.DNS1 = (uint32_t)IPAddress(8, 8, 8, 8);
-    ipAddress_struct.DNS2 = (uint32_t)IPAddress(164, 124, 101, 2);
-    ipAddress_struct.WEBSERVERPORT = 81;
-    ipAddress_struct.NTP_1 = (uint32_t)IPAddress(203, 248, 240, 140);
-    ipAddress_struct.NTP_2 = (uint32_t)IPAddress(13, 209, 84, 50);
-    ipAddress_struct.ntpuse = false;
-
-    ipAddress_struct.HighVoltage = 36500;
-    ipAddress_struct.LowVoltage = 26000;
-    ipAddress_struct.HighImp = 80000;
-    ipAddress_struct.HighTemp = 70;
-    ipAddress_struct.alarmSetStatus = 0;
-    strncpy(ipAddress_struct.deviceName, "BAT RACK1", 9);
-    ipAddress_struct.isUpdate = false;
-    strncpy(ipAddress_struct.ssid, "iftech", 6);
-    strncpy(ipAddress_struct.password, "iftech0273", 10);
-
+    nvsFactoryDefaults();
     EEPROM.writeByte(0, 0x57);
     EEPROM.commit();
     nvsSave();
@@ -219,8 +332,24 @@ void setup()
   ipAddress_struct.HighImp = 0;
   ipAddress_struct.HighTemp = 0;
   EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
+  if (ipAddress_struct.screenSaveMin > 999)
+  {
+    ipAddress_struct.screenSaveMin = 0;
+  }
   Serial.printf("\ninit data \n%d %d %d %u", ipAddress_struct.HighVoltage, ipAddress_struct.LowVoltage, ipAddress_struct.HighTemp, ipAddress_struct.HighImp);
   Serial.println("LVGL Benchmark Demo");
+
+  Serial.println("[BOOT] W610 before LCD");
+  sEthOk = ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
+                        IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
+  if (!sEthOk)
+  {
+    Serial.println("[ETH] no W610 at boot - will retry");
+  }
+  else
+  {
+    ethServicesBeginIfNeeded();
+  }
 
   gfx->begin();
   gfx->fillScreen(BLACK);
@@ -259,9 +388,6 @@ void setup()
   bleSetup();
   lv_init();
 
-  // led = lv_led_create(lv_scr_act());
-
-  // Init touch device
   pinMode(TOUCH_GT911_RST, OUTPUT);
   digitalWrite(TOUCH_GT911_RST, LOW);
   delay(10);
@@ -283,17 +409,13 @@ void setup()
   {
     lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, screenWidth * screenHeight / 6);
 
-    /* Initialize the display */
     lv_disp_drv_init(&disp_drv);
-    /*Change the following line to your display resolution*/
     disp_drv.hor_res = screenWidth;
     disp_drv.ver_res = screenHeight;
     disp_drv.flush_cb = my_disp_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
 
-    /*Initialize the (dummy) input device driver*/
-    /* Initialize the (dummy) input device driver */
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
@@ -303,46 +425,29 @@ void setup()
     ui_init();
     initSamwooPackUi();
     statusLedsBegin();
-
-    lv_label_set_text(ui_DateLabel, "");
-    lv_label_set_text(ui_DateLabel1, "");
-    lv_label_set_text(ui_TimeLabel, "");
-    lv_label_set_text(ui_TimeLabel1, "");
+    styleClockLabels();
 
     Serial.println("Setup done");
   }
   init_cursor();
-  struct tm tm;
-  tm.tm_year = 2023 - 1900;
-  tm.tm_mon = 11;
-  tm.tm_mday = 13;
-  tm.tm_hour = 15;
-  tm.tm_min = 13;
-  tm.tm_sec = 00;
-  struct timeval tv;
-  tv.tv_sec = mktime(&tm);
-  tv.tv_usec = 0;
-  settimeofday(&tv, NULL);
-  EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
-  setMemoryDataToLCD();
-  samwooBegin();
-  sEthOk = ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
-                        IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
-  webFsBegin();
-  if (sEthOk)
+  if (boardRtcSyncEsp())
   {
-    snmpBatteryBegin();
-    ipFinderBegin();
-    webHttpBegin();
+    Serial.println("[RTC] ESP clock from DS1307");
   }
   else
   {
-    Serial.println("[ETH] no W610 - SNMP/IPFinder skipped");
+    Serial.println("[RTC] no time (halted or missing). BLE: time YYYY MM DD HH MM SS");
   }
+  EEPROM.readBytes(1, (byte *)&ipAddress_struct, sizeof(ipAddress_struct));
+  Serial.println("[BOOT] fill LCD");
+  setMemoryDataToLCD();
+  paintClock();
+  Serial.println("[BOOT] samwoo");
+  samwooBegin();
+  webFsBegin();
+  ethServicesBeginIfNeeded();
   esp_task_wdt_init(WDT_TIMEOUT, true);
   esp_task_wdt_add(NULL);
-  naradaClient.initBatInfo();
-  // for(int i=0;i<8;i++)displayToLcd(i,true);
 };
 static int interval = 1000;
 static unsigned long previousmills = 0;
@@ -354,16 +459,26 @@ unsigned long incTime=1;
 
 void loop()
 {
-  void *parameters;
-  //wifiOtaloop();
   now = millis();
   esp_task_wdt_reset();
   serialProtocalparse();
-  if (sEthOk)
+  if (!sEthOk && (now - sEthRetryMs > 5000))
   {
-    snmpBatteryLoop();
+    sEthRetryMs = now;
+    Serial.println("[ETH] retry W610");
+    sEthOk = ethW610Begin(IPAddress(ipAddress_struct.IPADDRESS), IPAddress(ipAddress_struct.GATEWAY),
+                          IPAddress(ipAddress_struct.SUBNETMASK), IPAddress(ipAddress_struct.DNS1));
+  }
+  ethServicesBeginIfNeeded();
+  if (sEthSvc)
+  {
     ipFinderPoll();
-    webHttpLoop();
+    const bool ioOk = ethW610IpUsable() && !ipFinderIsHeld();
+    if (ioOk)
+    {
+      snmpBatteryLoop();
+      webHttpLoop();
+    }
   }
   statusLedsLoop();
   bleCheck();
@@ -372,17 +487,42 @@ void loop()
     previousmills = now;
     incTime++;
     lcdOntime++;
+    paintClock();
+    if (digitalRead(BUTTON_ERASE) == 0)
+    {
+      sEraseHold++;
+      Serial.printf("[IO] reset btn %u\n", (unsigned)sEraseHold);
+      if (sEraseHold >= 3)
+      {
+        factoryResetNow();
+      }
+    }
+    else
+    {
+      sEraseHold = 0;
+    }
   }
   if( incTime % 20 ==0){
-    //매 20초마다 검사한다.
     incTime++;
   }
-  //if ((incTime % 10) == 0) // 100*10 = 1S
-  if(lcdOntime >= LED_OFF_TIME) //lv_led_off(led);
+  const uint16_t offSec = screenSaveSec();
+  if (offSec == 0)
   {
-      //ledcWrite(0,0);
-      lv_obj_add_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
+    if (sLcdDim)
+    {
+      ledcWrite(0, BRIGHT);
+      sLcdDim = false;
+    }
   }
-  lv_timer_handler(); /* let the GUI do its work */
+  else if (lcdOntime >= offSec)
+  {
+    if (!sLcdDim)
+    {
+      ledcWrite(0, 0);
+      lv_obj_add_flag(cursor_obj, LV_OBJ_FLAG_HIDDEN);
+      sLcdDim = true;
+    }
+  }
+  lv_timer_handler();
   vTaskDelay(5);
 }

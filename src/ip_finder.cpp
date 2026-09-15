@@ -75,6 +75,11 @@ void ipFinderPoll()
   sIpFinder.poll();
 }
 
+bool ipFinderIsHeld()
+{
+  return sIpFinder.isHeld();
+}
+
 void ipFinderBegin()
 {
   UdpIpFinderService::Config cfg;

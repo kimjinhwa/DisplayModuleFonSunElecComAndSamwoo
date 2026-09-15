@@ -3,5 +3,6 @@
 
 void ipFinderBegin();
 void ipFinderPoll();
+bool ipFinderIsHeld();
 
 #endif

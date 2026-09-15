@@ -12,6 +12,7 @@
 #include <Ethernet_Generic.h>
 #include <esp_wifi.h>
 #include "board_pins.h"
+#include "UdpIpFinderService.h"
 
 #ifndef BAUDRATEDEF
 #define BAUDRATEDEF 115200
@@ -30,12 +31,41 @@ public:
 
 static HwTelnetServer telnet(23);
 static EthernetClient telnetClient;
+static EthernetUDP sFinderUdp;
+static UdpIpFinderService sFinder;
+static uint8_t sMac[6];
 static uint32_t tickCount = 0;
 
 static const IPAddress kIp(192, 168, 0, 57);
 static const IPAddress kGw(192, 168, 0, 1);
 static const IPAddress kSn(255, 255, 255, 0);
 static const IPAddress kDns(8, 8, 8, 8);
+
+static bool buildFinderSnap(UdpIpFinderService::DeviceSnapshot &out, void *)
+{
+  char macStr[18];
+  snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+           sMac[0], sMac[1], sMac[2], sMac[3], sMac[4], sMac[5]);
+  out.type = "ESP32";
+  out.hostname = "hwtest_w610";
+  out.mac = macStr;
+  out.ip = Ethernet.localIP();
+  out.subnet = Ethernet.subnetMask();
+  out.gateway = Ethernet.gatewayIP();
+  out.webEnabled = false;
+  out.webPort = 80;
+  out.status = "active";
+  out.uptimeSeconds = millis() / 1000;
+  out.version = "hwtest";
+  return true;
+}
+
+static bool applyFinderNet(const UdpIpFinderService::NetworkConfig &, void *)
+{
+  return false;
+}
+
+static void finderRestart(void *) {}
 
 static void fillMac(uint8_t mac[6])
 {
@@ -83,6 +113,7 @@ void setup()
 
   uint8_t mac[6];
   fillMac(mac);
+  memcpy(sMac, mac, 6);
   Serial.printf("MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
@@ -95,6 +126,20 @@ void setup()
   Serial.println("Ping : ping 192.168.0.57");
   Serial.println("Telnet: telnet 192.168.0.57 23");
   telnet.begin();
+
+  UdpIpFinderService::Config fcfg;
+  fcfg.port = 1234;
+  fcfg.deviceType = "ESP32";
+  sFinder.setConfig(fcfg);
+  sFinder.setCallbacks(buildFinderSnap, applyFinderNet, finderRestart, nullptr);
+  if (sFinder.begin(&sFinderUdp))
+  {
+    Serial.println("[IPFINDER] UDP 1234 started");
+  }
+  else
+  {
+    Serial.println("[IPFINDER] UDP 1234 bind failed");
+  }
 }
 
 static void serviceTelnet()
@@ -125,6 +170,7 @@ void loop()
 {
   static uint32_t lastMs = 0;
   serviceTelnet();
+  sFinder.poll();
 
   if (millis() - lastMs >= 5000)
   {

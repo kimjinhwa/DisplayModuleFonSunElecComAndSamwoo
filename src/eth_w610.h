@@ -14,6 +14,8 @@ String ethW610MacString();
 IPAddress ethW610LocalIP();
 IPAddress ethW610Subnet();
 IPAddress ethW610Gateway();
+bool ethW610LinkUp();
+bool ethW610IpUsable();
 
 void webHttpBegin();
 void webHttpLoop();

@@ -24,13 +24,25 @@ powershell -ExecutionPolicy Bypass -File .\makeExe.ps1
 python python/SnmpFinder.py
 ```
 
+## 한 방 (펌웨어 + 웹 파일 + 테스트)
+
+USB로 제품 펌을 올리고 `UploadFiles/` 를 SPIFFS에 올린 뒤, 웹·팩1·팩2·SNMP를 검사합니다.
+
+```
+python python/deploy_and_test.py --host 192.168.0.65 --port 80
+python python/deploy_and_test.py --skip-fw
+```
+
+팩 통신 `ok=true`까지 필수면 `--require-pack-ok`. 기본은 모듈 1·2 값을 조회만 하고, 슬레이브 미접속은 WARN 입니다.
+COM 모니터가 켜져 있으면 펌웨어 업로드가 실패합니다.
+
 ## 웹 파일 업로드
 
 ```
-python python/upload_web.py --host 192.168.0.65 --port 81
+python python/upload_web.py --host 192.168.0.65 --port 80
 ```
 
-기본 웹 포트는 설정값(공장 81)입니다. Finder에서 80으로 바꿀 수 있습니다.
+기본 웹 포트는 설정값(공장 80)입니다. Finder에서 바꿀 수 있습니다.
 
 올리는 파일은 `UploadFiles/` 만 씁니다. `fileUpload.html` / jQuery / svg 는 넣지 않습니다.
 `/fileUpload` 페이지는 펌웨어에 들어 있습니다.
@@ -38,7 +50,7 @@ python python/upload_web.py --host 192.168.0.65 --port 81
 ## 스모크
 
 ```
-python python/check_bms_web.py --host 192.168.0.65 --port 81 --upload
+python python/check_bms_web.py --host 192.168.0.65 --port 80 --upload
 ```
 
 - 대소문자 URL (`/Login.html`, `/INDEX.HTML`)
@@ -49,7 +61,8 @@ python python/check_bms_web.py --host 192.168.0.65 --port 81 --upload
 ## 1시간 소크
 
 ```
-python -u python/soak_bms.py --host 192.168.0.65 --port 81 --hours 1
+python -u python/soak_bms.py
+python -u python/soak_bms.py 192.168.0.65 --hours 1
 ```
 
 로그: `python/soak_logs/`

@@ -13,7 +13,7 @@ Sunton ESP32-8048S070 (ESP32-S3, 7인치 RGB 터치)입니다. RS-485로 삼우 
 ## 1. 목적
 
 - 팩 1·2의 전압·전류·셀·온도를 7인치 화면에 표시한다.
-- 이더넷이 있으면 SNMPv2c(UDP 161, community `public`)와 웹 모니터(공장 포트 **81**, `WEBSERVERPORT=0`이면 끔)로 같은 값을 제공한다.
+- 이더넷이 있으면 SNMPv2c(UDP 161, community `public`)와 웹 모니터(공장 포트 **80**, `WEBSERVERPORT=0`이면 끔)로 같은 값을 제공한다.
 - 같은 랜에서 IP Finder(`python/release/IPFinder.exe` 또는 `python/SnmpFinder.py`)가 UDP **1234**로 검색하면 응답하고, IP/서브넷/게이트웨이/웹 on·off·포트를 바꿀 수 있다.
 - 앱 `IFTECH SAMWOO` (BLE `IFTECH_SW_<MAC>`)로 SSID를 넣고, 재부팅 후 Wi‑Fi로 펌웨어를 받는다.
 
@@ -22,7 +22,7 @@ Sunton ESP32-8048S070 (ESP32-S3, 7인치 RGB 터치)입니다. RS-485로 삼우 
 ## 2. 구조
 
 ```
-src/                   펌웨어 (ui.ino, 삼우 폴링, SNMP, 웹, BLE, OTA)
+src/                   펌웨어 (main.cpp, SquareUi, 삼우 폴링, SNMP, 웹, BLE, OTA)
 lib/                   LVGL, GFX, Arduino_SNMP, Ethernet_Generic …
 UploadFiles/           웹 HTML/CSS/JS (SPIFFS)
 mib/                   SAMWOO_BAT_MIB_VER_01.MIB
@@ -42,7 +42,8 @@ post_build.py          firmware.bin / esp32_samwoo.json → IIS + uploadFirmware
 
 | 경로 | 역할 |
 |------|------|
-| `src/ui.ino` | 부팅. `isUpdate`면 BLE보다 먼저 Wi‑Fi OTA |
+| `src/main.cpp` | 부팅. `isUpdate`면 BLE보다 먼저 Wi‑Fi OTA |
+| `src/SquareUi/` | SquareLine Expert 내보내기 (셀 16 포함) |
 | `src/samwoo_poll.cpp` | 슬레이브 1·2 RS-485 폴링 |
 | `src/snmp_battery.cpp` | SNMPv2c |
 | `src/eth_w610.cpp` | W6100 + 웹 HTTP (같은 TU) |
@@ -72,7 +73,7 @@ post_build.py          firmware.bin / esp32_samwoo.json → IIS + uploadFirmware
 | `hwtest_rtc` / `hwtest_rs485` / `hwtest_w610` | 칩 단독 확인 |
 
 OTA 메타 파일: **`esp32_samwoo.json`**  
-공개 URL: `http://ift.iptime.org:81/Esp32UploadFirmware/`
+공개 URL: `http://ift.iptime.org:80/Esp32UploadFirmware/`
 
 ---
 
@@ -84,6 +85,12 @@ pio run -e esp32_samwoo -t upload
 ```
 
 업로드 포트는 `COM3`. 매 빌드마다 `Version.h` patch가 올라가므로 불필요한 빌드는 하지 않는다.
+
+한 방 (펌웨어 + 웹 HTML + 웹/팩1·2/SNMP):
+
+```
+python python/deploy_and_test.py --host 192.168.0.65 --port 80
+```
 
 산출물 (IIS 및 `uploadFirmware/`):
 
@@ -143,7 +150,7 @@ flutter build apk --release
 
 ## 7. 웹
 
-공장 포트 **81**. 로그인 `admin` / `admin`.
+공장 포트 **80**. 로그인 `admin` / `admin`.
 
 | 페이지 | 내용 |
 |--------|------|
@@ -155,8 +162,8 @@ flutter build apk --release
 HTML은 `UploadFiles/` 만 올린다. `fileUpload.html` / jQuery / svg 는 넣지 않는다.
 
 ```
-python python/upload_web.py --host 192.168.0.65 --port 81
-python python/check_bms_web.py --host 192.168.0.65 --port 81
+python python/upload_web.py --host 192.168.0.65 --port 80
+python python/check_bms_web.py --host 192.168.0.65 --port 80
 python/release/IPFinder.exe
 python python/SnmpFinder.py
 ```
@@ -192,7 +199,7 @@ python python/snmp_check.py 192.168.0.65
 
 실행 방법은 [python/README.md](python/README.md).
 
-스모크 (`check_bms_web.py`, 호스트 192.168.0.65:81):
+스모크 (`check_bms_web.py`, 호스트 192.168.0.65:80):
 
 - `GET /Login.html` 200, 로그인 200
 - `/api/bms` 팩1·팩2 `ok=true` (시뮬레이터: 54.0 V / 52.8 V)
@@ -206,6 +213,9 @@ python python/snmp_check.py 192.168.0.65
 
 웹·SNMP·IPFinder는 별도 이더넷 태스크가 없다. `/api/snmp-get` 은 UDP를 다시 열지 않고 `samwooRegs` 를 읽는다.
 
+```
+python -u python/soak_bms.py --host 192.168.0.65 --port 80 --hours 1
+```
 ---
 
 ## 10. 보드 도면

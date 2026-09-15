@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "src/ui.h"
+#include "ui.h"
 #include "samwoo_poll.h"
 #include "SerialProtocalParse.h"
 

@@ -1,6 +1,8 @@
 """웹 + SNMP + RS-485 동시 부하. SNMPToModBusCommon soak_test 와 같은 목적.
 
-  python -u python/soak_bms.py --host 192.168.0.65 --port 81 --hours 1
+  python -u python/soak_bms.py
+  python -u python/soak_bms.py 192.168.0.65
+  python -u python/soak_bms.py --host 192.168.0.65 --port 80 --hours 1
 """
 from __future__ import print_function
 
@@ -13,9 +15,10 @@ from datetime import datetime
 
 try:
     from urllib.request import Request, urlopen, build_opener, HTTPCookieProcessor
+    from urllib.error import URLError
     from http.cookiejar import CookieJar
 except ImportError:
-    from urllib2 import Request, urlopen, build_opener, HTTPCookieProcessor
+    from urllib2 import Request, urlopen, build_opener, HTTPCookieProcessor, URLError
     from cookielib import CookieJar
 
 
@@ -40,12 +43,14 @@ def snmp_get(host, oid):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--host", default="192.168.0.65")
-    ap.add_argument("--port", type=int, default=81)
+    ap.add_argument("host", nargs="?", default=None, help="장비 IP (기본 192.168.0.65)")
+    ap.add_argument("--host", dest="host_opt", default="192.168.0.65")
+    ap.add_argument("--port", type=int, default=80)
     ap.add_argument("--hours", type=float, default=1.0)
     ap.add_argument("--interval", type=float, default=2.0)
     ap.add_argument("--snmp-every", type=int, default=5)
     args = ap.parse_args()
+    host = args.host if args.host else args.host_opt
 
     here = os.path.dirname(os.path.abspath(__file__))
     logdir = os.path.join(here, "soak_logs")
@@ -57,10 +62,16 @@ def main():
 
     cj = CookieJar()
     opener = build_opener(HTTPCookieProcessor(cj))
-    base = "http://%s:%s" % (args.host, args.port)
+    base = "http://%s:%s" % (host, args.port)
+    print("soak %s hours=%.2f" % (base, args.hours))
     req = Request(base + "/api/login", data=json.dumps({"userid": "admin", "passwd": "admin"}).encode("utf-8"))
     req.add_header("Content-Type", "application/json")
-    opener.open(req, timeout=8).read()
+    try:
+        opener.open(req, timeout=8).read()
+    except (URLError, OSError, TimeoutError) as e:
+        print("로그인 실패 %s  (%s)" % (base, e))
+        print("장비 IP/웹 포트를 확인하세요. 이 보드 예: --host 192.168.0.65 --port 80")
+        return 1
 
     end = time.time() + args.hours * 3600
     n = 0
@@ -97,7 +108,7 @@ def main():
             if n % args.snmp_every == 0:
                 t1 = time.time()
                 try:
-                    snmp_get(args.host, "1.3.6.1.2.1.32.1.8.0")
+                    snmp_get(host, "1.3.6.1.2.1.32.1.8.0")
                     snmp_ms = (time.time() - t1) * 1000
                 except Exception as e:
                     snmp_ms = -1
